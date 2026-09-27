@@ -1,22 +1,32 @@
 BEGIN:VCALENDAR
+PRODID:-//Google Inc//Google Calendar 70.9054//EN
 VERSION:2.0
-PRODID:-//WA7BNM Contest Calendar//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:WA7BNM Contest Calendar
+X-WR-TIMEZONE:Etc/GMT
 BEGIN:VEVENT
-SUMMARY:CQ World Wide DX Contest\, RTTY
 DTSTART:20261003T000000Z
 DTEND:20261004T235900Z
-URL:https://www.contestcalendar.com/contestdetails.php?ref=1
+DTSTAMP:20260927T213705Z
+UID:CSVConvert0001
+DESCRIPTION:<a href="https://www.contestcalendar.com/contestdetails.php?ref=
+ 1">Info</a>
+SUMMARY:CQ World Wide DX Contest\, RTTY
+TRANSP:OPAQUE
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:Oceania DX Contest\, Phone
 DTSTART:20261003T060000Z
 DTEND:20261004T060000Z
+UID:417595694@hornucopia.com
 URL:https://www.contestcalendar.com/contestdetails
  .php?ref=2
+DESCRIPTION:http://www.hornucopia.com/contestcal/weeklycont.php
+SUMMARY:Oceania DX Contest\, Phone
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:Contest de martes
 DTSTART:20260929T190000Z
 DTEND:20260929T200000Z
+SUMMARY:Contest de martes
 END:VEVENT
 END:VCALENDAR

@@ -23,7 +23,8 @@ log = logging.getLogger(__name__)
 
 FUENTES = {
     "voacap": "VOACAP (voacapl, port para Linux de J. Watson; https://github.com/jawatson/voacapl)",
-    "giro": "GIRO / DIDBase, ionosonda de El Arenosillo EA036 (https://giro.uml.edu/)",
+    "giro": "GIRO / DIDBase, Lowell GIRO Data Center (https://giro.uml.edu/), datos CC-BY-NC-SA 4.0 "
+            "de la ionosonda de El Arenosillo EA036 (INTA)",
     "noaa_pred": "NOAA SWPC — predicción del ciclo solar",
 }
 

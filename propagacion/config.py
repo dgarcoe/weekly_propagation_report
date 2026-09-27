@@ -67,10 +67,13 @@ URL_NOAA_CYCLE_PRED = "https://services.swpc.noaa.gov/json/solar-cycle/predicted
 URL_DRAO_FLUX = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/fluxtable.txt"
 URL_WSPR_LIVE = "https://db1.wspr.live/"
 URL_RBN_DAY = "https://data.reversebeacon.net/rbn_history/{fecha:%Y%m%d}.zip"
-URL_GIRO = "https://lgdc.uml.edu/common/DIDBGetValues"
+# El antiguo servlet DIDBGetValues ya no existe; el formulario scaled.php redirige a este.
+URL_GIRO = "https://lgdc.uml.edu/fastchar/getbest"
 GIRO_URSI_ARENOSILLO = "EA036"
 URL_CELESTRAK_AMATEUR = "https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle"
-URL_CONTEST_ICS = "https://www.contestcalendar.com/calendar.ics"
+# Calendario público de Google que enlaza contestcalendar.com (WA7BNM).
+URL_CONTEST_ICS = ("https://calendar.google.com/calendar/ical/"
+                   "9o3or51jjdsantmsqoadmm949k%40group.calendar.google.com/public/basic.ics")
 
 # Prefijos para filtrar RBN (el fichero no trae locator): distrito EA1.
 RBN_CALL_REGEX = r"^E[A-H]1[A-Z]"

@@ -83,8 +83,23 @@ def test_rbn_filtra_distrito_ea1():
 
 
 def test_giro():
+    # Formato real de lgdc.uml.edu/fastchar/getbest (sept. 2026); «---» = sin medida.
     serie = giro.parse_didb((FIX / "giro_ea036.txt").read_text())
-    assert serie == [(datetime(2026, 9, 21, 0, 0), 4.525), (datetime(2026, 9, 21, 12, 0), 9.875)]
+    assert serie == [(datetime(2026, 9, 20, 0, 0, 1), 3.95), (datetime(2026, 9, 20, 0, 35, 1), 3.95)]
+
+
+def test_giro_parametros(monkeypatch):
+    visto = {}
+
+    def fake(url, params=None, **kw):
+        visto.update(url=url, **params)
+        return (FIX / "giro_ea036.txt").read_text()
+
+    monkeypatch.setattr(giro, "fetch_text", fake)
+    giro.descargar_fof2(date(2026, 9, 14), date(2026, 9, 21))
+    assert visto["url"].endswith("/fastchar/getbest")
+    assert visto["fromDate"] == "2026/09/14 00:00:00" and visto["toDate"] == "2026/09/21 00:00:00"
+    assert visto["ursiCode"] == "EA036" and visto["charName"] == "foF2"
 
 
 def test_tle_y_seleccion():
@@ -97,7 +112,9 @@ def test_tle_y_seleccion():
 def test_ics():
     ev = contests.parse_ics((FIX / "calendar.ics").read_text())
     assert ev[0].nombre == "CQ World Wide DX Contest, RTTY"
-    assert ev[1].url.endswith("contestdetails.php?ref=2")      # línea plegada
+    # Calendario de Google: el enlace solo viene dentro de DESCRIPTION (y en una línea plegada)
+    assert ev[0].url == "https://www.contestcalendar.com/contestdetails.php?ref=1"
+    assert ev[1].url.endswith("contestdetails.php?ref=2")      # campo URL plegado
     assert ev[0].inicio.isoformat() == "2026-10-03T00:00:00+00:00"
 
 
