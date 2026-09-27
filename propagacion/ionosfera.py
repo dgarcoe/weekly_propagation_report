@@ -76,20 +76,18 @@ def quitar_atipicos(medidas: list[Medida], car: str, ventana_min: int = 60,
     return out
 
 
-def fisicamente_posible(m: Medida, car: str) -> bool:
-    """Descarta combinaciones imposibles dentro del mismo ionograma (errores de ARTIST):
-    la capa F1 siempre está por debajo de la F2."""
-    v = m.get(car)
-    if v is None:
-        return False
-    if car == "foF1":
-        fof2 = m.get("foF2")
-        return fof2 is None or v < fof2
-    return True
+FOF1_MAXIMO = 7.0        # MHz: ni en máximo solar pasa de ~6,5
 
 
 def limpiar(medidas: list[Medida], car: str, cs_min: int = CS_MINIMO) -> list[tuple[datetime, float]]:
-    validas = [m for m in filtrar_confianza(medidas, cs_min) if fisicamente_posible(m, car)]
+    validas = filtrar_confianza(medidas, cs_min)
+    if car == "foF1":
+        # ARTIST a veces escala mal todo el ionograma (foF2 y foF1 disparadas a la vez):
+        # la F1 solo vale si la F2 de ese mismo ionograma pasó el control de calidad,
+        # y siempre por debajo de ella.
+        fof2_ok = dict(quitar_atipicos(validas, "foF2"))
+        validas = [m for m in validas if (v := m.get("foF1")) is not None and v <= FOF1_MAXIMO
+                   and m.time in fof2_ok and v < fof2_ok[m.time]]
     return quitar_atipicos(validas, car)
 
 

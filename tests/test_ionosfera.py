@@ -158,7 +158,8 @@ def test_fof1_imposible_se_descarta():
     """ARTIST a veces etiqueta como F1 una traza por encima de la F2: imposible."""
     t0 = datetime(2026, 9, 21, 10)
     ms = [io.Medida(t0 + timedelta(minutes=5 * i), 90, {"foF2": 7.5, "foF1": 5.0}) for i in range(5)]
-    ms.append(io.Medida(t0 + timedelta(minutes=27), 90, {"foF2": 7.6, "foF1": 8.1}))
+    ms.append(io.Medida(t0 + timedelta(minutes=27), 90, {"foF2": 7.6, "foF1": 8.1}))   # F1 > F2
+    ms.append(io.Medida(t0 + timedelta(minutes=33), 90, {"foF2": 11.9, "foF1": 8.0}))  # todo disparado
     assert max(v for _, v in io.limpiar(ms, "foF1")) == 5.0
 
 
