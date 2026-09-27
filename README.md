@@ -13,7 +13,7 @@ pasó de verdad** (spots WSPR y RBN desde Galicia).
 | 1. El Sol | SFI medio/máx./mín. y tendencia, SSN efectivo (≈ 1,14·SFI − 73,2), Ap medio, Kp máx. con semáforo 🟢🟡🔴, fulguraciones M/X, outlook de NOAA para la semana y gráfica de SFI de 12 meses | NOAA SWPC, DRAO Penticton |
 | 2. Lo que pasó de verdad | Mapa de calor hora UTC × banda, DX de la semana por banda (distancia desde IN52PE), rutas por continente y mapa azimutal | wspr.live (IN52/IN53), RBN (distrito EA1) |
 | 3. Previsión | Fiabilidad VOACAP hacia NA este, Caribe, Sudamérica, Japón, Oceanía y Sudáfrica; NVIS/regional en 80 y 40 m a partir de foF2 de El Arenosillo; línea gris | voacapl, GIRO DIDBase, cálculo propio |
-| 4. Agenda | Concursos del fin de semana, lluvias de meteoros, pases de satélites sobre Vigo | WA7BNM, IMO, CelesTrak + skyfield |
+| 4. Agenda | Concursos del fin de semana, lluvias de meteoros, pases de satélites sobre Vigo | WA7BNM (RSS), IMO, CelesTrak/AMSAT + skyfield |
 | 5. Comentario | Hueco `<!-- COMENTARIO -->` para un socio. **No se publica sin él.** | — |
 
 Si una fuente falla, el informe se genera igualmente con esa sección marcada como
@@ -64,6 +64,9 @@ El SSN es el efectivo del SFI previsto por NOAA para la semana. Se cambian en
   opcionalmente con otra fecha) compila voacapl, genera el borrador y **abre un PR** con la carpeta
   del informe. Hay que habilitar *Settings → Actions → General → Allow GitHub Actions to create and
   approve pull requests*.
+- **`diagnostico.yml`**: genera un informe completo sin abrir PR y lo deja como *artifact*
+  (y su texto en el resumen de la ejecución). Útil para comprobar las fuentes tras un cambio;
+  se lanza a mano o al tocar `propagacion/` en una rama `claude/**`.
 - **`ci.yml`**: tests en cada push/PR y, en los PR que tocan `informes/*/informe.md`, la
   comprobación `comentario-humano`, que falla mientras el comentario del socio siga pendiente.
   (Los PR abiertos por el bot con `GITHUB_TOKEN` no lanzan otros workflows; la comprobación corre
@@ -97,6 +100,13 @@ tests/                 tests de cálculos, parsers y un informe completo con dat
 - **RBN**: los ficheros diarios no traen locator, así que se filtra por indicativo (distrito EA1,
   `RBN_CALL_REGEX`) y se usan los continentes del propio fichero. Es una aproximación: EA1 incluye
   también Asturias, Cantabria y Castilla y León.
+- **GIRO**: el antiguo servicio `DIDBGetValues` ya no existe; se usa
+  `lgdc.uml.edu/fastchar/getbest` (el mismo que usa el formulario web `scaled.php`). Los datos
+  son CC-BY-NC-SA 4.0 y hay que citar al proveedor de la ionosonda (INTA, El Arenosillo).
+- **Concursos**: el RSS de WA7BNM (`calendar.rss`) cubre la semana en curso y el fin de semana
+  siguiente. El calendario de Google enlazado desde su web está sin actualizar.
+- **Satélites**: TLE de CelesTrak y, si no responde (a veces pasa desde los runners de GitHub),
+  de AMSAT (`nasabare.txt`).
 - **PSKReporter** (FT8) no está incluido todavía: su API tiene límites de uso estrictos.
 - **Meteoros**: calendario fijo aproximado de la IMO en `sections/agenda.py`; revisar cada año.
 - Los formatos de las fuentes pueden cambiar: los tests de `tests/test_fuentes.py` documentan el
