@@ -11,32 +11,27 @@ jobs:
   probar:
     runs-on: ubuntu-latest
     steps:
-      - name: Probar endpoints
+      - name: Probar endpoints (ronda 2)
         run: |
           probe() {
             code=$(curl -sL -A "EA1RKV-informe-propagacion/1.0" -o /tmp/r -w '%{http_code} %{content_type} %{size_download}' --max-time 60 "$1")
             echo "=== $code  $1"
-            head -c 600 /tmp/r | tr -d '\r'; echo
+            head -c ${2:-600} /tmp/r | tr -d '\r'; echo
           }
-          F="fromDate=2026.09.14&toDate=2026.09.21"
-          FS="fromDate=2026/09/14&toDate=2026/09/21"
-          FD="fromDate=2026-09-14&toDate=2026-09-21"
-          for base in https://lgdc.uml.edu/common https://giro.uml.edu/common http://lgdc.uml.edu/common https://lgdc.uml.edu/didbase https://giro.uml.edu/didbase; do
-            probe "$base/DIDBGetValues?ursiCode=EA036&charName=foF2&DMUF=3000&$F"
+          echo "---- scaled.php: formularios, scripts y URLs"
+          curl -sL --max-time 60 https://giro.uml.edu/didbase/scaled.php > /tmp/s.html
+          grep -oiE '(action|src|href)="[^"]*"' /tmp/s.html | sort -u
+          grep -oiE "(https?:)?//[a-z.]*uml\.edu[^\"' <>]*" /tmp/s.html | sort -u
+          grep -iE 'DIDB|GetValues|servlet|ursi|charName|fromDate|\.jsp|\.php' /tmp/s.html | head -60
+          echo "---- estación EA036 en la lista"
+          curl -sL --max-time 60 https://lgdc.uml.edu/common/DIDBFastStationList | grep -iE -B2 -A2 'EA036|Arenosillo' | head -20
+          echo "---- servlets candidatos"
+          Q="ursiCode=EA036&charName=foF2&DMUF=3000&fromDate=2026.09.14&toDate=2026.09.21"
+          for path in common/DIDBGetValues common/DIDBGetValues.jsp common/DIDBGetChars common/DIDBGetCharValues common/GetValues DIDBGetValues didbase/DIDBGetValues common/DIDBYearList; do
+            probe "https://lgdc.uml.edu/$path?$Q" 300
           done
-          probe "https://lgdc.uml.edu/common/DIDBGetValues?ursiCode=EA036&charName=foF2&DMUF=3000&$FS"
-          probe "https://lgdc.uml.edu/common/DIDBGetValues?ursiCode=EA036&charName=foF2&DMUF=3000&$FD"
-          probe "https://lgdc.uml.edu/common/DIDBFastStationList"
-          probe "https://giro.uml.edu/didbase/scaled.php"
-          echo "---- enlaces en portadas GIRO"
-          for u in https://giro.uml.edu/ https://lgdc.uml.edu/ https://giro.uml.edu/didbase/; do
-            curl -sL --max-time 60 "$u" | grep -oiE '(href|action)="[^"]*"' | sort -u | head -60
-          done
-          echo "---- contestcalendar"
-          for p in calendar.ics contestcal.ics cal.ics weeklycont.ics ical.php calendar.php; do
-            probe "https://www.contestcalendar.com/$p"
-          done
-          for u in https://www.contestcalendar.com/ https://www.contestcalendar.com/calendar.php https://www.contestcalendar.com/weeklycont.php; do
-            echo "-- enlaces en $u"
-            curl -sL --max-time 60 "$u" | grep -oiE '(href)="[^"]*"' | grep -iE 'ics|ical|webcal|cal|rss|xml|feed' | sort -u | head -40
-          done
+          probe "https://lgdc.uml.edu/common/DIDBDayStationStatistic?ursiCode=EA036&year=2026&month=9" 400
+          echo "---- contest calendar"
+          probe "https://calendar.google.com/calendar/ical/9o3or51jjdsantmsqoadmm949k%40group.calendar.google.com/public/basic.ics" 1500
+          probe "https://www.contestcalendar.com/calendar.rss" 1200
+          probe "https://www.contestcalendar.com/weeklycal.txt" 800
