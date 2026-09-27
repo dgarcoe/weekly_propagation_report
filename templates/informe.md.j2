@@ -156,10 +156,12 @@ mayo a agosto (y un repunte menor en diciembre).
 {% if c %}
 #### Teoría frente a realidad
 
-De los **{{ c.total|es }} spots** a 2 000–4 000 km (un salto de F2), el **{{ c.pct_dentro|es }} %** se
-produjeron en bandas por debajo de la MUF(3000) medida a esa hora.{% if c.fuera %} Los {{ c.fuera|es }}
-restantes ({{ c.fuera_bandas|join(", ") }}) llegaron por encima de la MUF típica: días mejores que la
-mediana, esporádica E o trayectos con otra geometría.{% endif %}
+Comparamos, hora a hora, lo que dice la MUF(3000) medida con lo que se oyó de verdad a 2 000–4 000 km
+(un salto de F2) en {{ c.bandas|join(", ") }}. **Coinciden en el {{ c.pct_acierto|es }} %** de las
+{{ c.casillas }} casillas hora × banda.{% if c.abre_sin_spots %} En {{ c.abre_sin_spots }} la MUF decía «abierta» pero
+no hubo spots (poca actividad WSPR en esa banda y hora, o absorción).{% endif %}{% if c.spots_sin_muf %} En {{ c.spots_sin_muf }}
+hubo spots aunque la MUF típica no llegaba{% if c.sorpresas %}, sobre todo en {{ c.sorpresas|join(" y ") }}{% endif %}: días mejores
+que la mediana o esporádica E.{% endif %} La línea naranja del mapa de calor muestra lo mismo de un vistazo.
 {% endif %}
 
 

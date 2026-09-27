@@ -76,8 +76,21 @@ def quitar_atipicos(medidas: list[Medida], car: str, ventana_min: int = 60,
     return out
 
 
+def fisicamente_posible(m: Medida, car: str) -> bool:
+    """Descarta combinaciones imposibles dentro del mismo ionograma (errores de ARTIST):
+    la capa F1 siempre está por debajo de la F2."""
+    v = m.get(car)
+    if v is None:
+        return False
+    if car == "foF1":
+        fof2 = m.get("foF2")
+        return fof2 is None or v < fof2
+    return True
+
+
 def limpiar(medidas: list[Medida], car: str, cs_min: int = CS_MINIMO) -> list[tuple[datetime, float]]:
-    return quitar_atipicos(filtrar_confianza(medidas, cs_min), car)
+    validas = [m for m in filtrar_confianza(medidas, cs_min) if fisicamente_posible(m, car)]
+    return quitar_atipicos(validas, car)
 
 
 # --- Perfiles horarios --------------------------------------------------------------------

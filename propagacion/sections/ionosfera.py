@@ -149,31 +149,42 @@ def _esporadica(p: Periodo, iono: dict, contactos) -> dict:
             "spots_es": len(spots), "hay_contactos": contactos is not None}
 
 
+BANDAS_CRUCE = ("20m", "17m", "15m", "12m", "10m")
+
+
 def _cruce_muf(iono: dict, contactos) -> dict | None:
-    """¿Coincide lo que dice la MUF(3000) medida con lo que se oyó a ~3000 km?"""
+    """¿Coincide lo que dice la MUF(3000) medida con lo que se oyó a ~3000 km?
+
+    Se compara hora a hora en las bandas altas, que es donde está la frontera:
+    para cada casilla (hora, banda) la teoría dice «abre» si la MUF(3000) mediana
+    de esa hora supera la banda, y la realidad dice «abrió» si hubo algún spot
+    de esa banda a 2000-4000 km a esa hora algún día de la semana.
+    """
     muf = iono["vigo"].get("MUF(D)") or {}
     if not muf or not contactos:
         return None
-    dx = [c for c in contactos if c.distancia_km is not None and 2000 <= c.distancia_km <= 4000
-          and c.banda in config.BANDAS]
-    if not dx:
+    oidas = {(c.time.hour, c.banda) for c in contactos
+             if c.distancia_km is not None and 2000 <= c.distancia_km <= 4000 and c.banda in BANDAS_CRUCE}
+    bandas = [b for b in BANDAS_CRUCE if any(bb == b for _, bb in oidas)]
+    if not oidas or not bandas:
         return None
-    dentro = fuera = 0
-    fuera_bandas: Counter = Counter()
-    for c in dx:
-        m = muf.get(c.time.hour)
-        if m is None:
-            continue
-        if config.BANDAS[c.banda][2] <= m * 1.1:
-            dentro += 1
-        else:
-            fuera += 1
-            fuera_bandas[c.banda] += 1
-    total = dentro + fuera
-    if not total:
-        return None
-    return {"total": total, "pct_dentro": 100 * dentro / total, "fuera": fuera,
-            "fuera_bandas": [b for b, _ in fuera_bandas.most_common(3)]}
+    acierto = abre_sin_spots = spots_sin_muf = 0
+    sorpresas: Counter = Counter()
+    for h in sorted(muf):
+        for b in bandas:
+            teoria = config.BANDAS[b][2] <= muf[h] * 1.1
+            real = (h, b) in oidas
+            if teoria == real:
+                acierto += 1
+            elif teoria:
+                abre_sin_spots += 1
+            else:
+                spots_sin_muf += 1
+                sorpresas[b] += 1
+    total = acierto + abre_sin_spots + spots_sin_muf
+    return {"casillas": total, "bandas": bandas, "pct_acierto": 100 * acierto / total,
+            "abre_sin_spots": abre_sin_spots, "spots_sin_muf": spots_sin_muf,
+            "sorpresas": [b for b, _ in sorpresas.most_common(2)]}
 
 
 def _curiosidades(iono: dict) -> dict:

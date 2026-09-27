@@ -152,3 +152,25 @@ def test_spread_f():
           io.Medida(base + timedelta(hours=10), 90, {"FF": 0.1}),
           io.Medida(base + timedelta(hours=1), 40, {"FF": 1.2})]          # CS baja: no cuenta
     assert io.horas_spread_f(ms) == [base]
+
+
+def test_fof1_imposible_se_descarta():
+    """ARTIST a veces etiqueta como F1 una traza por encima de la F2: imposible."""
+    t0 = datetime(2026, 9, 21, 10)
+    ms = [io.Medida(t0 + timedelta(minutes=5 * i), 90, {"foF2": 7.5, "foF1": 5.0}) for i in range(5)]
+    ms.append(io.Medida(t0 + timedelta(minutes=27), 90, {"foF2": 7.6, "foF1": 8.1}))
+    assert max(v for _, v in io.limpiar(ms, "foF1")) == 5.0
+
+
+def test_cruce_teoria_realidad():
+    from types import SimpleNamespace as NS
+
+    from propagacion.sections import ionosfera as sec
+
+    iono = {"vigo": {"MUF(D)": {10: 15.0, 14: 25.0}}}
+    c = [NS(time=datetime(2026, 9, 21, 14), banda="15m", distancia_km=3000),     # MUF 25: acierto
+         NS(time=datetime(2026, 9, 22, 10), banda="15m", distancia_km=3000),     # MUF 15: sorpresa
+         NS(time=datetime(2026, 9, 22, 14), banda="20m", distancia_km=500)]       # demasiado cerca
+    r = sec._cruce_muf(iono, c)
+    assert r["bandas"] == ["15m"] and r["casillas"] == 2
+    assert r["pct_acierto"] == 50 and r["spots_sin_muf"] == 1 and r["sorpresas"] == ["15m"]
