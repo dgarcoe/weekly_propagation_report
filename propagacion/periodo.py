@@ -13,6 +13,10 @@ class Periodo:
 
     @classmethod
     def para(cls, hoy: date) -> "Periodo":
+        """Informe «de este lunes». Un domingo se considera ya el informe del lunes
+        siguiente: la semana está prácticamente completa y la previsión mira adelante."""
+        if hoy.weekday() == 6:
+            hoy += timedelta(days=1)
         lunes = hoy - timedelta(days=hoy.weekday())
         return cls(lunes, lunes - timedelta(days=7), lunes - timedelta(days=1))
 

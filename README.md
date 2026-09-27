@@ -46,8 +46,9 @@ falla y hay copia antigua en caché, se usa esa.
 La sección de predicción usa [voacapl](https://github.com/jawatson/voacapl). Para tenerlo en local:
 
 ```bash
-sudo apt-get install gfortran
+sudo apt-get install gfortran automake autoconf
 git clone https://github.com/jawatson/voacapl.git && cd voacapl
+autoreconf -fi                               # evita el error «aclocal-1.15 is missing»
 ./configure && make && sudo make install     # make sin -j
 makeitshfbc                                  # crea ~/itshfbc
 ```
