@@ -11,21 +11,25 @@ jobs:
   probar:
     runs-on: ubuntu-latest
     steps:
-      - name: Probar GIRO scaled.php (ronda 3)
+      - name: Consulta real a GIRO scaled.php (ronda 4)
         run: |
           U=https://giro.uml.edu/didbase/scaled.php
-          curl -sL --max-time 60 "$U" > /tmp/s.html
-          echo "---- campos del formulario"
-          grep -oiE '<(input|select|textarea)[^>]*>' /tmp/s.html | grep -v 'type="button"' | sort -u | head -80
-          echo "---- opciones de estación con EA036"
-          grep -oiE '<option[^>]*>[^<]*' /tmp/s.html | grep -iE 'EA036|ARENOSILLO' | head
-          echo "---- opciones (muestra)"
-          grep -oiE '<option[^>]*>[^<]*' /tmp/s.html | head -40
-          echo "---- javascript inline relevante"
-          grep -iE 'submit|ursi|station|char' /tmp/s.html | grep -v '<option' | head -40
-          echo "---- POST de prueba"
-          for extra in "ursiCode=EA036&charName=foF2" "ursiCode=EA036&charName[]=foF2" "ursiCode=EA036&foF2=on" "station=EA036&charName=foF2"; do
-            echo "== $extra"
-            curl -sL --max-time 90 -X POST "$U" --data "date_start=2026-09-20 00:00&date_end=2026-09-20 03:00&$extra&DMUF=3000" -o /tmp/p.html -w '%{http_code} %{size_download}\n'
-            sed -e 's/<[^>]*>/ /g' /tmp/p.html | tr -s ' \n' | grep -iE -A12 'foF2|EA036|error|no data' | head -30
-          done
+          curl -sL --max-time 120 -X POST "$U" \
+            --data-urlencode "location=EA036" --data-urlencode "chosenchars[]=0" \
+            --data-urlencode "date_start=2026-09-20 00:00" --data-urlencode "date_end=2026-09-20 06:00" \
+            --data-urlencode "DMUF=3000" --data-urlencode "query_submit=Search" \
+            -o /tmp/p.html -w 'HTTP %{http_code} %{content_type} %{size_download}\n'
+          echo "---- enlaces del resultado"
+          grep -oiE '(href|src|action)="[^"]*"' /tmp/p.html | sort -u | grep -viE 'css|bootstrap|jquery|menuBar' | head -30
+          echo "---- <pre> / tablas del resultado"
+          python3 - <<'PY'
+          import re
+          h = open('/tmp/p.html', encoding='utf-8', errors='replace').read()
+          i = h.find('query_submit')
+          for m in re.finditer(r'<pre[^>]*>(.*?)</pre>', h, re.S | re.I):
+              print('PRE:', m.group(1)[:1500])
+          txt = re.sub(r'<[^>]+>', ' ', h[i:])
+          txt = re.sub(r'[ \t]+', ' ', txt)
+          lines = [l.strip() for l in txt.splitlines() if l.strip()]
+          print('\n'.join(lines[-80:]))
+          PY
