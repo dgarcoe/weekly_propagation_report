@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+<title>WA7BNM Contest Calendar</title>
+<link>https://www.contestcalendar.com</link>
+<description>Calendar of ham radio contests</description>
+<lastBuildDate>Sun, 27 Sep 2026 00:00:00 +0000</lastBuildDate>
+<item>
+<title>CQ Worldwide DX Contest, RTTY</title>
+<link>https://www.contestcalendar.com/weeklycontdetails.php?ref=003em84y</link>
+<description>0000Z, Sep 26 to 2400Z, Sep 27</description>
+</item>
+<item>
+<title>RSGB FT4 Contest</title>
+<link>https://www.contestcalendar.com/weeklycontdetails.php?ref=003ehb2l</link>
+<description>1900Z-2100Z, Sep 28</description>
+</item>
+<item>
+<title>K1USN Slow Speed Test</title>
+<link>https://www.contestcalendar.com/weeklycontdetails.php?ref=003fsgmh</link>
+<description>2000Z-2100Z, Oct 2</description>
+</item>
+<item>
+<title>George Batterson 1936 QSO Party</title>
+<link>https://www.contestcalendar.com/weeklycontdetails.php?ref=003gzrc2</link>
+<description>2300Z, Oct 2 to 0300Z, Oct 5</description>
+</item>
+<item>
+<title>TRC DX Contest</title>
+<link>https://www.contestcalendar.com/weeklycontdetails.php?ref=003fltbc</link>
+<description>0600Z, Oct 3 to 1800Z, Oct 4</description>
+</item>
+<item>
+<title>URC DX RTTY Contest</title>
+<link>https://www.contestcalendar.com/weeklycontdetails.php?ref=003fmoct</link>
+<description>0000Z to 2400Z, Oct 2</description>
+</item>
+<item>
+<title>NRAU 10m Activity Contest</title>
+<link>https://www.contestcalendar.com/weeklycontdetails.php?ref=003fbqoi</link>
+<description>1700Z-1800Z, Oct 1 (CW) and 1800Z-1900Z, Oct 1 (SSB) and 1900Z-2000Z, Oct 1 (FM)</description>
+</item>
+</channel>
+</rss>

@@ -17,6 +17,7 @@ FUENTES = {
     "contests": "WA7BNM Contest Calendar (https://www.contestcalendar.com/)",
     "imo": "International Meteor Organization — calendario de lluvias (https://www.imo.net/)",
     "celestrak": "CelesTrak — TLE de satélites de radioaficionado (https://celestrak.org/)",
+    "amsat": "AMSAT — TLE de satélites de radioaficionado (https://www.amsat.org/)",
 }
 TZ_LOCAL = ZoneInfo("Europe/Madrid")
 
@@ -163,7 +164,7 @@ def pases_satelites(tles: list[tuple[str, str, str]], inicio: date, dias: int = 
 def construir(p: Periodo) -> dict:
     res: dict = {"ok": True, "fuentes": [], "avisos": []}
     try:
-        res["concursos"] = concursos_finde(contests.descargar(), p)
+        res["concursos"] = concursos_finde(contests.descargar(p.sig_inicio), p)
         res["fuentes"].append(FUENTES["contests"])
     except FuenteNoDisponible as e:
         log.warning("Concursos: %s", e)
@@ -171,9 +172,9 @@ def construir(p: Periodo) -> dict:
     res["lluvias"] = lluvias_activas(p.sig_inicio, p.sig_fin)
     res["fuentes"].append(FUENTES["imo"])
     try:
-        tles = celestrak.select(celestrak.descargar())
-        res["satelites"] = pases_satelites(tles, p.sig_inicio)
-        res["fuentes"].append(FUENTES["celestrak"])
+        tles, fuente = celestrak.descargar()
+        res["satelites"] = pases_satelites(celestrak.select(tles), p.sig_inicio)
+        res["fuentes"].append(FUENTES[fuente])
     except FuenteNoDisponible as e:
         log.warning("CelesTrak: %s", e)
         res["satelites"] = None

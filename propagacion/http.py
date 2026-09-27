@@ -62,7 +62,8 @@ def fetch_bytes(url: str, params: dict | None = None, max_age_h: float = 6,
         log.debug("caché: %s", url)
         return path.read_bytes()
     try:
-        r = session().get(url, params=params, timeout=timeout or config.HTTP_TIMEOUT)
+        # Conexión: 15 s (un host caído no debe bloquear el informe minutos); lectura: la pedida.
+        r = session().get(url, params=params, timeout=(15, timeout or config.HTTP_TIMEOUT))
         r.raise_for_status()
         data = r.content
     except requests.RequestException as e:

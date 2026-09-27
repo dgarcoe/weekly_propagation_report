@@ -1,6 +1,6 @@
 """Tests de los parsers de cada fuente con ficheros de ejemplo."""
 import json
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 import pytest
 
@@ -105,17 +105,61 @@ def test_giro_parametros(monkeypatch):
 def test_tle_y_seleccion():
     tles = celestrak.parse_tle(fake_tle())
     assert [t[0] for t in tles] == ["ISS (ZARYA)", "SAUDISAT 1C (SO-50)"]
-    sel = celestrak.select(tles, ("SO-50", "ISS (ZARYA)", "SO-5", "AO-7"))
-    assert [s[0] for s in sel] == ["SO-50", "ISS (ZARYA)"]
+    sel = celestrak.select(tles, {"SO-50": ("SO-50",), "ISS": ("ISS (ZARYA)", "ISS"),
+                                  "SO-5": ("SO-5",), "AO-7": ("AO-7", "AO-07")})
+    assert [s[0] for s in sel] == ["SO-50", "ISS"]
 
 
-def test_ics():
-    ev = contests.parse_ics((FIX / "calendar.ics").read_text())
-    assert ev[0].nombre == "CQ World Wide DX Contest, RTTY"
-    # Calendario de Google: el enlace solo viene dentro de DESCRIPTION (y en una línea plegada)
-    assert ev[0].url == "https://www.contestcalendar.com/contestdetails.php?ref=1"
-    assert ev[1].url.endswith("contestdetails.php?ref=2")      # campo URL plegado
-    assert ev[0].inicio.isoformat() == "2026-10-03T00:00:00+00:00"
+def test_tle_nombres_amsat():
+    # AMSAT escribe «AO-07» e «ISS»; no debe confundir AO-7 con AO-73.
+    l1, l2 = fake_tle().splitlines()[1:3]
+    tles = [("AO-73", l1, l2), ("AO-07", l1, l2), ("ISS", l1, l2)]
+    sel = celestrak.select(tles, {"AO-7": ("AO-7", "AO-07"), "ISS": ("ISS (ZARYA)", "ISS")})
+    assert [(s[0]) for s in sel] == ["AO-7", "ISS"]
+    assert sel[0][1] == l1
+
+
+def test_tle_respaldo_amsat(monkeypatch):
+    from propagacion import config, http
+
+    def fake(url, params=None, **kw):
+        if url == config.URL_CELESTRAK_AMATEUR:
+            raise http.FuenteNoDisponible("timeout")
+        return fake_tle().replace("ISS (ZARYA)", "ISS")
+
+    monkeypatch.setattr(celestrak, "fetch_text", fake)
+    tles, fuente = celestrak.descargar()
+    assert fuente == "amsat" and tles[0][0] == "ISS"
+
+
+def _utc(*a):
+    return datetime(*a, tzinfo=timezone.utc)
+
+
+@pytest.mark.parametrize("texto, ini, fin", [
+    ("0000Z, Sep 26 to 2400Z, Sep 27", _utc(2026, 9, 26), _utc(2026, 9, 28)),
+    ("0700Z-1000Z, Sep 27", _utc(2026, 9, 27, 7), _utc(2026, 9, 27, 10)),
+    ("0000Z to 2400Z, Oct 2", _utc(2026, 10, 2), _utc(2026, 10, 3)),
+    ("0000Z-0100Z, Oct 1 and 0200Z-0300Z, Oct 2", _utc(2026, 10, 1), _utc(2026, 10, 2, 3)),
+    ("1700Z-1800Z, Oct 1 (CW) and 1800Z-1900Z, Oct 1 (SSB)", _utc(2026, 10, 1, 17), _utc(2026, 10, 1, 19)),
+    ("2300Z-0100Z, Oct 3", _utc(2026, 10, 3, 23), _utc(2026, 10, 4, 1)),      # cruza medianoche
+    ("1500Z, Dec 31 to 1500Z, Jan 1", _utc(2026, 12, 31, 15), _utc(2027, 1, 1, 15)),  # cambio de año
+])
+def test_horario_concursos(texto, ini, fin):
+    ref = date(2026, 12, 28) if "Dec" in texto else date(2026, 9, 28)
+    assert contests.parse_horario(texto, ref) == (ini, fin)
+
+
+def test_horario_ilegible():
+    assert contests.parse_horario("TBD", date(2026, 9, 28)) is None
+
+
+def test_rss_concursos():
+    ev = contests.parse_rss((FIX / "calendar.rss").read_text(), date(2026, 9, 28))
+    assert len(ev) == 7
+    trc = next(e for e in ev if e.nombre == "TRC DX Contest")
+    assert (trc.inicio, trc.fin) == (_utc(2026, 10, 3, 6), _utc(2026, 10, 4, 18))
+    assert trc.url.endswith("ref=003fltbc")
 
 
 # --- VOACAP -------------------------------------------------------------------------
