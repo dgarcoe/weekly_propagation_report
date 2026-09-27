@@ -70,6 +70,23 @@ URL_RBN_DAY = "https://data.reversebeacon.net/rbn_history/{fecha:%Y%m%d}.zip"
 # El antiguo servlet DIDBGetValues ya no existe; el formulario scaled.php redirige a este.
 URL_GIRO = "https://lgdc.uml.edu/fastchar/getbest"
 GIRO_URSI_ARENOSILLO = "EA036"
+
+
+@dataclass(frozen=True)
+class Ionosonda:
+    ursi: str
+    nombre: str
+    lat: float
+    lon: float
+
+
+# Digisondas que rodean Vigo (42,2° N 8,7° O). El Arenosillo queda 5° al sur, así que
+# sola resulta algo optimista; con Roquetes y Dourbes interpolamos a nuestra latitud.
+IONOSONDAS = (
+    Ionosonda("EA036", "El Arenosillo", 37.1, -6.7),
+    Ionosonda("EB040", "Roquetes (Ebro)", 40.8, 0.5),
+    Ionosonda("DB049", "Dourbes", 50.1, 4.6),
+)
 URL_CELESTRAK_AMATEUR = "https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle"
 # RSS de WA7BNM: semana en curso + fin de semana siguiente. (El .ics antiguo da 404 y el
 # calendario de Google enlazado desde la web está sin actualizar.)

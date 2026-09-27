@@ -11,7 +11,7 @@ import jinja2
 
 from . import config
 from .periodo import Periodo, fecha_corta, fecha_larga
-from .sections import agenda, prevision, realidad, sol
+from .sections import agenda, ionosfera, prevision, realidad, sol
 
 log = logging.getLogger(__name__)
 
@@ -58,12 +58,15 @@ def generar(hoy: date, salida: Path | None = None, usar_rbn: bool = True,
     log.info("Generando informe %s en %s", p.etiqueta, outdir)
 
     s1 = _seguro("sol", sol.construir, p, outdir)
-    s2 = _seguro("realidad", realidad.construir, p, outdir, usar_rbn=usar_rbn)
-    s3 = _seguro("prevision", prevision.construir, p, outdir, s1)
+    iono = _seguro("ionosondas", ionosfera.medir, p)
+    s2 = _seguro("realidad", realidad.construir, p, outdir, usar_rbn=usar_rbn,
+                 muf3000=(iono.get("vigo") or {}).get("MUF(D)"))
+    si = _seguro("ionosfera", ionosfera.construir, p, outdir, iono, s1, s2.get("_contactos"))
+    s3 = _seguro("prevision", prevision.construir, p, outdir, s1, iono)
     s4 = _seguro("agenda", agenda.construir, p)
 
     fuentes: list[str] = []
-    for s in (s1, s2, s3, s4):
+    for s in (s1, s2, si, s3, s4):
         for f in s.get("fuentes", []):
             if f not in fuentes:
                 fuentes.append(f)
@@ -75,6 +78,7 @@ def generar(hoy: date, salida: Path | None = None, usar_rbn: bool = True,
         "cfg": config,
         "sol": s1,
         "realidad": s2,
+        "ionosfera": si,
         "prevision": s3,
         "agenda": s4,
         "fuentes": fuentes,

@@ -100,6 +100,17 @@ tests/                 tests de cálculos, parsers y un informe completo con dat
 - **RBN**: los ficheros diarios no traen locator, así que se filtra por indicativo (distrito EA1,
   `RBN_CALL_REGEX`) y se usan los continentes del propio fichero. Es una aproximación: EA1 incluye
   también Asturias, Cantabria y Castilla y León.
+- **Ionosondas** (GIRO): El Arenosillo (EA036), Roquetes/Ebro (EB040) y Dourbes (DB049). De
+  cada una se descargan foF2, foF1, foEs, MUF(3000)F2, M(3000)F2, hmF2, fmin y spread-F (FF/QF).
+  Solo se usan ionogramas con confianza de autoescalado (CS) ≥ 70 y se descartan los valores que se
+  alejan de sus vecinos (±60 min). Los perfiles se llevan a la hora solar de Vigo y se interpolan
+  en latitud (El Arenosillo, 5° al sur, sola resulta optimista). Con ellos:
+  - NVIS/regional: MUF = foF2·sec φ con la hmF2 medida; LUF ≈ fmin·√sec φ (absorción en la capa D);
+    MUF(3000)F2 directa para 3 000 km y como línea sobre el mapa de calor de spots.
+  - «¿Mejor o peor de lo normal?»: foF2 frente a la mediana de los 30 días anteriores, junto al Kp.
+  - «¿Hubo esporádica E?»: episodios con foEs > 5,6 MHz (10 m) o > 10 MHz (6 m), MUF Es ≈ 5·foEs,
+    cruzados con los spots WSPR de 6/10 m a 800–2 500 km.
+  - Notas: spread-F nocturno, capa F1 y altura del pico F2.
 - **GIRO**: el antiguo servicio `DIDBGetValues` ya no existe; se usa
   `lgdc.uml.edu/fastchar/getbest` (el mismo que usa el formulario web `scaled.php`). Los datos
   son CC-BY-NC-SA 4.0 y hay que citar al proveedor de la ionosonda (INTA, El Arenosillo).

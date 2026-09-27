@@ -60,7 +60,9 @@ Las bandas con más actividad fueron {% for b in r.bandas_top %}**{{ b.banda }}*
 ![Mapa de calor de spots por hora UTC y banda]({{ r.heatmap }})
 
 _Cómo leerlo: cada casilla es una hora UTC en una banda; cuanto más oscura, más spots. Fíjate en
-cómo las bandas altas (10–15 m) se «encienden» con el Sol y las bajas (40–80 m) de noche._
+cómo las bandas altas (10–15 m) se «encienden» con el Sol y las bajas (40–80 m) de noche._{% if r.techo_muf %}
+_La línea naranja es la **MUF(3000)F2 medida** por las ionosondas: por debajo de ella, la teoría dice
+que la banda abre para un salto de 3 000 km. Si los spots siguen la línea, teoría y realidad coinciden._{% endif %}
 
 ### DX de la semana por banda
 
@@ -99,6 +101,83 @@ los kilómetros. Entre paréntesis, los spots de cada continente. {{ r.locators_
 {{ sin_datos }}
 {% endif %}
 
+### La ionosfera medida
+
+{% set io = ionosfera %}
+{% if io.ok %}
+Datos de las digisondas de {% for e in io.estaciones %}**{{ e.nombre }}** ({{ e.lat|es(1) }}° N){{ ", " if not loop.last }}{% endfor %}.
+Solo usamos ionogramas con confianza de autoescalado ≥ {{ io.cs_minimo }} % y descartamos los valores
+que se salen de lo que marcan sus vecinos (los errores típicos del escalado automático).
+
+{% set a = io.anomalia %}
+{% if a %}
+#### ¿Mejor o peor de lo normal?
+
+![foF2 frente a lo normal y Kp]({{ a.grafica }})
+
+{% if a.tormenta %}
+**Tormenta ionosférica negativa:** {% for d in a.tormenta %}el {{ d.fecha }} la foF2 estuvo un
+**{{ (-d.desv)|es }} %** por debajo de lo normal{% if d.kp_48h is not none %} (Kp máximo en las 48 h previas: {{ d.kp_48h|es(1) }}){% endif %}{{ "; " if not loop.last else "." }}{% endfor %}
+
+Tras una tormenta geomagnética la termosfera se calienta, cambia su composición y la capa F2 pierde
+electrones durante uno o dos días: las bandas altas cierran antes y la MUF baja aunque el Sol siga igual.
+{% else %}
+La foF2 se movió en torno a lo habitual (media semanal {{ a.media|es }} %; el peor día, el
+{{ a.peor.fecha }}, con {{ a.peor.desv|es }} %). Sin tormentas ionosféricas negativas.
+{% endif %}
+
+_Se compara cada medida de El Arenosillo con la mediana de los 30 días anteriores a la misma hora.
+Por debajo del −20 % hablamos de tormenta ionosférica negativa._
+{% endif %}
+
+#### ¿Hubo esporádica E esta semana?
+
+{% set es = io.es %}
+{% if es.episodios %}
+{% if es.hubo_6m %}**Sí, y fuerte:** la foEs superó los 10 MHz, suficiente para abrir los 6 m hacia Europa.
+{% else %}**Algo:** la foEs pasó de 5,6 MHz, lo bastante para aperturas cortas en 10 m, pero no llegó a 6 m.
+{% endif %}
+
+| Ionosonda | Día | Desde | Hasta (UTC) | foEs máx. | MUF Es (~1 800 km) | Banda | Spots WSPR |
+|---|---|---|---|---:|---:|---|---:|
+{% for e in es.episodios %}
+| {{ e.estacion }} | {{ e.dia }} | {{ e.desde }} | {{ e.hasta }} | {{ e.foes|es(1) }} MHz | {{ e.muf|es }} MHz | {{ e.banda }} | {{ e.spots if es.hay_contactos else "—" }} |
+{% endfor %}
+
+_La MUF de la Es para un salto de 1 500–2 000 km es unas 5 veces la foEs. «Spots WSPR»: spots de esa
+banda a 800–2 500 km desde Galicia durante el episodio._
+{% else %}
+No: la foEs no pasó de {% for k, v in es.maximos.items() %}{{ v|es(1) }} MHz en {{ k }}{{ ", " if not loop.last }}{% endfor %}.
+Hace falta más de ~5,6 MHz para 10 m y más de ~10 MHz para 6 m. La esporádica E es sobre todo cosa de
+mayo a agosto (y un repunte menor en diciembre).
+{% endif %}
+
+{% set c = io.cruce %}
+{% if c %}
+#### Teoría frente a realidad
+
+Comparamos, hora a hora, lo que dice la MUF(3000) medida con lo que se oyó de verdad a 2 000–4 000 km
+(un salto de F2) en {{ c.bandas|join(", ") }}. **Coinciden en el {{ c.pct_acierto|es }} %** de las
+{{ c.casillas }} casillas hora × banda.{% if c.abre_sin_spots %} En {{ c.abre_sin_spots }} la MUF decía «abierta» pero
+no hubo spots (poca actividad WSPR en esa banda y hora, o absorción).{% endif %}{% if c.spots_sin_muf %} En {{ c.spots_sin_muf }}
+hubo spots aunque la MUF típica no llegaba{% if c.sorpresas %}, sobre todo en {{ c.sorpresas|join(" y ") }}{% endif %}: días mejores
+que la mediana o esporádica E.{% endif %} La línea naranja del mapa de calor muestra lo mismo de un vistazo.
+{% endif %}
+
+
+{% set q = io.curiosidades %}
+#### Notas curiosas ({{ q.estacion }})
+
+{% if q.hmf2_dia %}- La capa F2 tuvo su pico a **{{ q.hmf2_dia|es }} km** de altura a mediodía{% if q.hmf2_noche %} y a {{ q.hmf2_noche|es }} km de noche{% endif %}.
+{% endif %}
+{% if q.fof1_max %}- La capa F1 apareció de día, con foF1 de hasta {{ q.fof1_max|es(1) }} MHz ({{ q.fof1_hora }} UTC).
+{% endif %}
+- **Spread-F:** {% if q.noches_spread_f %}se vio en {{ q.noches_spread_f }} noche(s) ({{ q.horas_spread_f }} h en total). Son irregularidades de la capa F que en la radio se notan como *flutter* y ecos, sobre todo en 40–80 m de madrugada.{% else %}ninguna noche con spread-F apreciable.{% endif %}
+
+{% else %}
+{{ sin_datos }}
+{% endif %}
+
 ## 3. Previsión para la semana ({{ sig_semana }})
 
 ### DX: fiabilidad prevista (VOACAP)
@@ -131,25 +210,42 @@ mensual: un día concreto puede ir mucho mejor o peor._
 
 {% set n = prevision.nvis %}
 {% if n.ok %}
-La ionosonda de El Arenosillo (Huelva) midió una **foF2 mediana de {{ n.fof2_mediana|es(1) }} MHz**
-la semana pasada: de {{ n.fof2_min|es(1) }} MHz de madrugada a {{ n.fof2_max|es(1) }} MHz hacia las
-{{ "%02d"|format(n.hora_max) }} UTC.
+{% if n.interpolado %}Combinando {{ n.estaciones|join(", ") }} y llevándolas a la latitud y la hora local de Vigo
+(El Arenosillo sola, 5° más al sur, resulta algo optimista), la **foF2 mediana estimada en Vigo fue de
+{{ n.fof2_mediana|es(1) }} MHz**{% else %}En El Arenosillo la **foF2 mediana fue de {{ n.fof2_mediana|es(1) }} MHz**{% endif %} la
+semana pasada: de {{ n.fof2_min|es(1) }} MHz de madrugada a {{ n.fof2_max|es(1) }} MHz hacia las
+{{ "%02d"|format(n.hora_max) }} UTC.{% if n.hmf2_mediana %} El pico de la
+capa F2 estuvo de mediana a {{ n.hmf2_mediana|es }} km.{% endif %}
 
-![foF2 por hora en El Arenosillo]({{ n.grafica }})
+
+![foF2 por hora]({{ n.grafica }})
 
 | Trayecto | sec φ | 80 m abierta | 40 m abierta | MUF (mín.–máx.) |
 |---|---:|---|---|---|
 {% for f in n.filas %}
-| {{ f.trayecto }} | {{ f.factor|es(2) }} | {{ f["80m"] }} | {{ f["40m"] }} | {{ f.muf_min|es(1) }}–{{ f.muf_max|es(1) }} MHz |
+| {{ f.trayecto }} | {{ f.factor|es(2) }} | {{ f["80m"] }}{% if f["80m_absorcion"] %} · _absorción: {{ f["80m_absorcion"] }}_{% endif %} | {{ f["40m"] }}{% if f["40m_absorcion"] %} · _absorción: {{ f["40m_absorcion"] }}_{% endif %} | {{ f.muf_min|es(1) }}–{{ f.muf_max|es(1) }} MHz |
 {% endfor %}
+
+{% if n.dx3000 %}
+**A 3 000 km** (un salto de F2, p. ej. Canarias–Escandinavia): la **MUF(3000)F2 medida** fue de
+{{ n.dx3000.muf_min|es(1) }} a {{ n.dx3000.muf_max|es(1) }} MHz (máxima hacia las {{ "%02d"|format(n.dx3000.hora_max) }} UTC).
+{% for b in n.dx3000.bandas %}{{ b.banda }}: {{ b.ventana }}{{ " · " if not loop.last }}{% endfor %}.
+{% endif %}
 
 > **¿Por qué importa foF2?** Es la frecuencia más alta que la capa F2 devuelve a tierra cuando
 > la señal sube en vertical. En NVIS (*Near Vertical Incidence Skywave*, antenas bajas que radian
 > hacia arriba) solo rebotan las frecuencias **por debajo de foF2**: si foF2 cae por debajo de
 > 7,1 MHz, los 40 m «saltan» Galicia y hay que bajar a 80 m. Para trayectos más largos la señal
 > llega inclinada y la capa aguanta más: la MUF de un salto es aproximadamente
-> **foF2 · sec(φ)**, donde φ es el ángulo de incidencia en la ionosfera (supuesta a 300 km).
-> Consideramos una banda abierta cuando la MUF mediana la supera con un 10 % de margen.
+> **foF2 · sec(φ)**, donde φ es el ángulo de incidencia en la ionosfera, calculado con la altura
+> real del pico (hmF2) que mide la ionosonda. Para 3 000 km usamos directamente la MUF(3000)F2 que
+> publica la digisonda, que ya tiene en cuenta la curvatura de la Tierra.
+>
+> **¿Y por abajo?** La capa D absorbe las frecuencias bajas de día. La **fmin** (frecuencia más
+> baja del ionograma) sube a mediodía por esa absorción: la usamos para estimar la LUF
+> (≈ fmin · √sec φ en la capa D). Una banda está «abierta» si la MUF la supera con un 10 % de
+> margen y la LUF queda por debajo; «absorción» son las horas en que la MUF la deja pasar pero la
+> capa D la cierra.
 {% else %}
 {{ sin_datos }}
 {% endif %}
