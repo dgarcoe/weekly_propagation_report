@@ -1,0 +1,42 @@
+name: Diagnóstico de fuentes
+
+# Comprueba desde el runner (que sí tiene red) qué URLs responden y con qué formato.
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/**"]
+    paths: [".github/workflows/diagnostico.yml"]
+
+jobs:
+  probar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probar endpoints
+        run: |
+          probe() {
+            code=$(curl -sL -A "EA1RKV-informe-propagacion/1.0" -o /tmp/r -w '%{http_code} %{content_type} %{size_download}' --max-time 60 "$1")
+            echo "=== $code  $1"
+            head -c 600 /tmp/r | tr -d '\r'; echo
+          }
+          F="fromDate=2026.09.14&toDate=2026.09.21"
+          FS="fromDate=2026/09/14&toDate=2026/09/21"
+          FD="fromDate=2026-09-14&toDate=2026-09-21"
+          for base in https://lgdc.uml.edu/common https://giro.uml.edu/common http://lgdc.uml.edu/common https://lgdc.uml.edu/didbase https://giro.uml.edu/didbase; do
+            probe "$base/DIDBGetValues?ursiCode=EA036&charName=foF2&DMUF=3000&$F"
+          done
+          probe "https://lgdc.uml.edu/common/DIDBGetValues?ursiCode=EA036&charName=foF2&DMUF=3000&$FS"
+          probe "https://lgdc.uml.edu/common/DIDBGetValues?ursiCode=EA036&charName=foF2&DMUF=3000&$FD"
+          probe "https://lgdc.uml.edu/common/DIDBFastStationList"
+          probe "https://giro.uml.edu/didbase/scaled.php"
+          echo "---- enlaces en portadas GIRO"
+          for u in https://giro.uml.edu/ https://lgdc.uml.edu/ https://giro.uml.edu/didbase/; do
+            curl -sL --max-time 60 "$u" | grep -oiE '(href|action)="[^"]*"' | sort -u | head -60
+          done
+          echo "---- contestcalendar"
+          for p in calendar.ics contestcal.ics cal.ics weeklycont.ics ical.php calendar.php; do
+            probe "https://www.contestcalendar.com/$p"
+          done
+          for u in https://www.contestcalendar.com/ https://www.contestcalendar.com/calendar.php https://www.contestcalendar.com/weeklycont.php; do
+            echo "-- enlaces en $u"
+            curl -sL --max-time 60 "$u" | grep -oiE '(href)="[^"]*"' | grep -iE 'ics|ical|webcal|cal|rss|xml|feed' | sort -u | head -40
+          done
