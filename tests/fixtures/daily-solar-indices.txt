@@ -1,0 +1,27 @@
+:Product: Daily Solar Data            DSD.txt
+:Issued: 0225 UT 28 Sep 2026
+#
+#  Prepared by the U.S. Dept. of Commerce, NOAA, Space Weather Prediction Center
+#  Please send comments and suggestions to SWPC.Webmaster@noaa.gov
+#
+#                Last 30 Days Daily Solar Data
+#
+#                         Sunspot       Stanford GOES15
+#           Radio  SESC     Area          Solar  X-Ray  ------ Flares ------
+#           Flux  Sunspot  10E-6   New     Mean  Bkgd    X-Ray      Optical
+#  Date     10.7cm Number  Hemis. Regions Field  Flux   C  M  X  S  1  2  3
+#---------------------------------------------------------------------------
+2026 09 14  128    95     560      1    -999   B5.1   3  0  0  2  0  0  0
+2026 09 15  130   101     610      0    -999   B5.3   4  0  0  3  0  0  0
+2026 09 16  131   104     640      2    -999   B5.8   6  1  0  5  0  0  0
+2026 09 17  129    99     620      0    -999   B5.2   2  0  0  1  0  0  0
+2026 09 18  127    92     590      0    -999   B4.9   1  0  0  1  0  0  0
+2026 09 19  126    88     540      1    -999   B4.7   3  0  0  2  0  0  0
+2026 09 20  125    85     500      0    -999   B4.6   2  0  0  0  0  0  0
+2026 09 21  132   110     700      2    -999   B6.1   5  1  0  4  0  0  0
+2026 09 22  138   121     780      1    -999   B6.8   7  2  0  6  1  0  0
+2026 09 23  142   127     820      0    -999   B7.2   9  1  1  5  0  0  0
+2026 09 24  140   119     800      0    -999   B7.0   6  0  0  3  0  0  0
+2026 09 25  137   112     760      1    -999   B6.5   4  0  0  2  0  0  0
+2026 09 26  135   108     720      0    -999   B6.2   3  0  0  2  0  0  0
+2026 09 27  133   104     690      0    -999   B6.0   2  0  0  1  0  0  0

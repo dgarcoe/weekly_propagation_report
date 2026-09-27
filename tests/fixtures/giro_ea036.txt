@@ -1,0 +1,6 @@
+#Global Ionospheric Radio Observatory
+#GIRO Web Service, DIDBase: El Arenosillo, EA036
+#Time                     CS  foF2 QD
+2026-09-21T00:00:00.000Z  90 4.525 //
+2026-09-21T00:15:00.000Z  85   --- //
+2026-09-21T12:00:00.000Z 100 9.875 //

@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q
+
+  comentario-humano:
+    # Bloquea la publicación de un informe sin el párrafo del socio.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Comprobar el comentario en los informes modificados
+        run: |
+          FILES=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD" -- 'informes/*/informe.md')
+          if [ -z "$FILES" ]; then echo "Este PR no toca ningún informe."; exit 0; fi
+          python -m propagacion comprobar $FILES

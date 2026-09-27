@@ -1,0 +1,242 @@
+{% set sin_datos = "_Sin datos esta semana._" %}
+# Propagación HF/VHF desde Vigo · semana {{ p.etiqueta }}
+
+**{{ cfg.STATION_CALL }} · Unión de Radioaficionados de Vigo-Val Miñor** · estación de referencia
+{{ cfg.STATION_NAME }} ({{ cfg.STATION_LOCATOR }}) · semana analizada: {{ titulo_semana }} ·
+previsión: {{ sig_semana }}
+
+> Este informe combina **lo que dice la teoría** (índices solares, predicciones) con **lo que pasó
+> de verdad** (spots reales desde Galicia). Todas las horas en UTC salvo que se indique lo contrario.
+
+## 1. El Sol y el campo geomagnético
+
+{% if sol.ok %}
+{% if sol.sfi %}
+{% set s = sol.sfi %}
+- **Flujo solar (SFI):** media **{{ s.media|es }}**, máximo {{ s.max|es }}, mínimo {{ s.min|es }} ·
+  tendencia frente a la semana anterior: **{{ s.tendencia }}**{% if s.media_anterior %} (media previa {{ s.media_anterior|es }}){% endif %}.
+- **SSN efectivo aproximado:** ≈ **{{ s.ssn_efectivo|es }}** (SSN ≈ 1,14·SFI − 73,2{% if not s.ssn_formula_valida %}; ojo, fuera del rango en que la fórmula es fiable, 70–250 SFI{% endif %}){% if s.ssn_observado is not none %} · número de manchas observado (media): {{ s.ssn_observado|es }}{% endif %}.
+{% endif %}
+{% if sol.geomag %}
+{% set g = sol.geomag %}
+- **Campo geomagnético:** {% if g.semaforo %}{{ g.semaforo.emoji }} **{{ g.semaforo.texto }}** · Kp máximo **{{ g.kp_max|es(2) }}**{% endif %}{% if g.ap_medio is defined and g.ap_medio is not none %} · Ap medio **{{ g.ap_medio|es }}** (máx. {{ g.ap_max }}){% endif %}{% if g.dias_inquietos %} · {{ g.dias_inquietos }} día(s) con Kp ≥ 4{% endif %}.
+{% endif %}
+{% set fl = sol.fulguraciones %}
+- **Fulguraciones:** {% if fl.m or fl.x %}{{ fl.x }} de clase X y {{ fl.m }} de clase M{% if fl.lista %} — la mayor, **{{ fl.lista[0].clase }}** ({{ fl.lista[0].cuando }}){% endif %}. Una fulguración fuerte en el lado diurno puede provocar un *apagón de radio* (absorción en la capa D) durante minutos u horas.{% else %}ninguna de clase M o X. Sin apagones de radio por fulguraciones.{% endif %}
+
+
+| Día | SFI | Manchas | Ap | Kp máx. | |
+|---|---:|---:|---:|---:|:-:|
+{% for d in sol.dias %}
+| {{ d.fecha }} | {{ d.sfi|es }} | {{ d.ssn|es }} | {{ d.ap|es }} | {{ d.kp|es(2) }} | {{ d.semaforo }} |
+{% endfor %}
+
+_Semáforo Kp: 🟢 ≤ 3 tranquilo · 🟡 4 inquieto · 🔴 ≥ 5 tormenta._
+
+{% if sol.grafica_sfi %}
+![Flujo solar de los últimos 12 meses]({{ sol.grafica_sfi }})
+
+_Estamos en la fase descendente del ciclo 25: el SFI baja poco a poco, con altibajos de ~27 días
+(la rotación del Sol). La línea discontinua marca la tendencia del último año._
+{% endif %}
+{% else %}
+{{ sin_datos }}
+{% endif %}
+{% if sol.outlook %}
+{% set o = sol.outlook %}
+
+**Lo que espera NOAA para esta semana:** SFI entre {{ o.sfi_min }} y {{ o.sfi_max }}, Ap máximo
+{{ o.ap_max }} y Kp máximo {{ o.kp_max }} ({{ o.semaforo.emoji }} {{ o.semaforo.texto }}){% if o.dias_kp4 %};
+días con Kp ≥ 4 previstos: {{ o.dias_kp4|join(", ") }}{% endif %}.
+{% endif %}
+
+## 2. Lo que pasó de verdad desde Galicia
+
+{% if realidad.ok %}
+{% set r = realidad %}
+Esta semana se registraron **{{ r.total|es }} spots** con una estación gallega en un extremo{% if r.wspr_spots is defined %} ({{ r.wspr_spots|es }} de WSPR, de {{ r.wspr_estaciones }} estaciones en {{ cfg.GALICIA_SQUARES|join("/") }}{% if r.rbn_spots is defined %}, y {{ r.rbn_spots|es }} de la Reverse Beacon Network en CW/RTTY{% endif %}){% endif %}.
+Las bandas con más actividad fueron {% for b in r.bandas_top %}**{{ b.banda }}** ({{ b.spots|es }}){{ ", " if not loop.last }}{% endfor %}, y la hora más movida, las **{{ "%02d"|format(r.hora_pico) }} UTC**.
+
+![Mapa de calor de spots por hora UTC y banda]({{ r.heatmap }})
+
+_Cómo leerlo: cada casilla es una hora UTC en una banda; cuanto más oscura, más spots. Fíjate en
+cómo las bandas altas (10–15 m) se «encienden» con el Sol y las bajas (40–80 m) de noche._
+
+### DX de la semana por banda
+
+{% if r.dx %}
+| Banda | Distancia | Estación gallega | Corresponsal | Locator | Continente | Cuándo | SNR |
+|---|---:|---|---|---|---|---|---:|
+{% for d in r.dx %}
+| {{ d.banda }} | {{ d.distancia|es }} km | {{ d.local }} | {{ d.remoto }} ({{ d.sentido }}) | {{ d.remoto_loc }} | {{ d.continente }} | {{ d.cuando }} | {{ d.snr }} dB |
+{% endfor %}
+
+_Distancias de círculo máximo medidas desde {{ cfg.STATION_LOCATOR }} (WSPR)._
+{% else %}
+_Sin spots con locator esta semana._
+{% endif %}
+
+### Rutas por continente
+
+{% if r.continentes %}
+| Continente | Spots | {% for b in r.continentes_bandas %}{{ b }} | {% endfor %}
+
+|---|---:|{% for b in r.continentes_bandas %}---:|{% endfor %}
+
+{% for c in r.continentes %}
+| {{ c.continente }} | **{{ c.total|es }}** | {% for n in c.bandas %}{{ n if n else "·" }} | {% endfor %}
+
+{% endfor %}
+{% endif %}
+{% if r.rosa %}
+
+![Rutas desde Vigo por rumbo y distancia]({{ r.rosa }})
+
+_Mapa centrado en Vigo: el ángulo es el rumbo al que apuntaría tu antena y la distancia al centro,
+los kilómetros. Entre paréntesis, los spots de cada continente. {{ r.locators_unicos|es }} locators distintos._
+{% endif %}
+{% else %}
+{{ sin_datos }}
+{% endif %}
+
+## 3. Previsión para la semana ({{ sig_semana }})
+
+### DX: fiabilidad prevista (VOACAP)
+
+{% set v = prevision.voacap %}
+{% if v.ok %}
+Bandas con fiabilidad media ≥ 50 % por franja horaria (UTC), la mejor primero. En cursiva, la
+mejor banda cuando ninguna llega al 50 % (apertura posible pero poco fiable):
+
+| Destino | km | Rumbo | {% for f in v.franjas %}{{ f }} | {% endfor %}
+
+|---|---:|---:|{% for f in v.franjas %}---|{% endfor %}
+
+{% for f in v.filas %}
+| {{ f.destino }} | {{ f.distancia|es }} | {{ f.rumbo }}° | {% for x in f.franjas %}{{ x }} | {% endfor %}
+
+{% endfor %}
+
+![Fiabilidad VOACAP por destino, banda y hora]({{ v.grafica }})
+
+_Supuestos: CW a 100 W, dipolos de media onda a media longitud de onda de altura en los dos
+extremos, ruido residencial. SSN usado: **{{ v.ssn|es }}** ({{ v.ssn_origen }}). En SSB hacen
+falta ~17 dB más de señal, así que resta fiabilidad; en FT8, suma. VOACAP describe el promedio
+mensual: un día concreto puede ir mucho mejor o peor._
+{% else %}
+{{ sin_datos }}
+{% endif %}
+
+### NVIS y contactos regionales (80 y 40 m)
+
+{% set n = prevision.nvis %}
+{% if n.ok %}
+La ionosonda de El Arenosillo (Huelva) midió una **foF2 mediana de {{ n.fof2_mediana|es(1) }} MHz**
+la semana pasada: de {{ n.fof2_min|es(1) }} MHz de madrugada a {{ n.fof2_max|es(1) }} MHz hacia las
+{{ "%02d"|format(n.hora_max) }} UTC.
+
+![foF2 por hora en El Arenosillo]({{ n.grafica }})
+
+| Trayecto | sec φ | 80 m abierta | 40 m abierta | MUF (mín.–máx.) |
+|---|---:|---|---|---|
+{% for f in n.filas %}
+| {{ f.trayecto }} | {{ f.factor|es(2) }} | {{ f["80m"] }} | {{ f["40m"] }} | {{ f.muf_min|es(1) }}–{{ f.muf_max|es(1) }} MHz |
+{% endfor %}
+
+> **¿Por qué importa foF2?** Es la frecuencia más alta que la capa F2 devuelve a tierra cuando
+> la señal sube en vertical. En NVIS (*Near Vertical Incidence Skywave*, antenas bajas que radian
+> hacia arriba) solo rebotan las frecuencias **por debajo de foF2**: si foF2 cae por debajo de
+> 7,1 MHz, los 40 m «saltan» Galicia y hay que bajar a 80 m. Para trayectos más largos la señal
+> llega inclinada y la capa aguanta más: la MUF de un salto es aproximadamente
+> **foF2 · sec(φ)**, donde φ es el ángulo de incidencia en la ionosfera (supuesta a 300 km).
+> Consideramos una banda abierta cuando la MUF mediana la supera con un 10 % de margen.
+{% else %}
+{{ sin_datos }}
+{% endif %}
+
+### Línea gris
+
+{% set lg = prevision.linea_gris %}
+{% if lg.ok %}
+El {{ lg.dia }}, en Vigo amanece a las **{{ lg.orto }} UTC** y anochece a las **{{ lg.ocaso }} UTC**.
+Durante el crepúsculo la absorción de la capa D desaparece antes de que se deshaga la capa F: es
+el momento de buscar DX en 160, 80 y 40 m a lo largo del terminador.
+
+| Destino | Orto DX | Ocaso DX | Terminador común (±45 min) | Noche en los dos extremos |
+|---|---|---|---|---|
+{% for f in lg.filas %}
+| {{ f.destino }} | {{ f.orto }} | {{ f.ocaso }} | {{ f.ventanas|join("; ") if f.ventanas else "—" }} | {{ f.noche|join("; ") if f.noche else "—" }} |
+{% endfor %}
+
+_El «terminador común» es la línea gris propiamente dicha (amanecer o anochecer a la vez en los dos
+extremos). La «noche en los dos extremos» es la ventana para 160 y 80 m, y a menudo para 40 m._
+{% else %}
+{{ sin_datos }}
+{% endif %}
+
+## 4. Agenda y efemérides
+
+### Concursos del fin de semana
+
+{% set a = agenda %}
+{% if a.concursos is none or not a.ok %}
+{{ sin_datos }}
+{% elif a.concursos %}
+| Concurso | Empieza (UTC) | Termina (UTC) | Horas |
+|---|---|---|---:|
+{% for c in a.concursos %}
+| {% if c.url %}[{{ c.nombre }}]({{ c.url }}){% else %}{{ c.nombre }}{% endif %} | {{ c.inicio }} | {{ c.fin }} | {{ c.horas }} |
+{% endfor %}
+{% else %}
+Fin de semana sin concursos en el calendario.
+{% endif %}
+
+### Lluvias de meteoros (meteor scatter en 6 m y 2 m)
+
+{% if a.lluvias %}
+{% for l in a.lluvias %}
+- **{{ l.nombre }}** — máximo {{ l.maximo_txt }}{% if l.dias_al_max > 0 %} (dentro de {{ l.dias_al_max }} días){% elif l.dias_al_max < 0 %} (hace {{ -l.dias_al_max }} días){% endif %}, THZ ≈ {{ l.thz }}{% if l.nota %} · {{ l.nota }}{% endif %}{% if l.activa %} · _activa esta semana_{% endif %}.
+{% endfor %}
+
+_Consejo: el meteor scatter funciona mejor al amanecer local, cuando la Tierra «barre» los
+meteoros de frente. Modos: MSK144 (6 m/2 m) con WSJT-X._
+{% else %}
+Ninguna lluvia importante activa esta semana; siempre quedan los meteoros esporádicos, mejores
+de madrugada.
+{% endif %}
+
+### Pases de satélites desde Vigo
+
+{% if a.satelites is none or not a.ok %}
+{{ sin_datos }}
+{% elif a.satelites %}
+Los mejores pases (elevación máxima ≥ 30°) de cada satélite:
+
+| Satélite | Día | AOS (UTC) | LOS (UTC) | Hora local | Elev. máx. | Min |
+|---|---|---|---|---|---:|---:|
+{% for s in a.satelites %}
+| {{ s.satelite }} | {{ s.dia }} | {{ s.aos }} | {{ s.los }} | {{ s.local }} | {{ s.elev }}° | {{ s.duracion }} |
+{% endfor %}
+{% else %}
+Ningún pase por encima de 30° esta semana.
+{% endif %}
+
+## 5. Comentario del club
+
+{{ marca_inicio }}
+> {{ pendiente }} un socio debe escribir aquí su comentario (qué trabajó, qué oyó, qué recomienda
+> para la semana). **El informe no se publica sin este párrafo.**
+{{ marca_fin }}
+
+---
+
+### Fuentes
+
+{% for f in fuentes %}
+- {{ f }}
+{% endfor %}
+- Cálculos propios: SSN efectivo, distancias de círculo máximo, MUF por ley de la secante y
+  orto/ocaso (algoritmo de NOAA).
+
+<sub>Borrador generado automáticamente el {{ generado }} por el script del radioclub
+{{ cfg.STATION_CALL }}. Las secciones sin datos indican que la fuente no respondió esta semana.</sub>
