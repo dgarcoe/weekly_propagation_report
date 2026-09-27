@@ -1,40 +1,26 @@
 name: Diagnóstico de fuentes
 
-# Genera un informe completo en el runner (que sí tiene red) sin abrir PR,
-# para comprobar que todas las fuentes responden.
+# Comprueba desde el runner (que sí tiene red) las fuentes con problemas.
 on:
   workflow_dispatch:
   push:
     branches: ["claude/**"]
-    paths: [".github/workflows/diagnostico.yml", "propagacion/**"]
+    paths: [".github/workflows/diagnostico.yml"]
 
 jobs:
   probar:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-      - run: pip install -r requirements.txt
-      - name: Compilar e instalar voacapl
-        continue-on-error: true
+      - name: Calendario de concursos y TLE
         run: |
-          sudo apt-get update -q
-          sudo apt-get install -y -q gfortran automake autoconf
-          git clone https://github.com/jawatson/voacapl.git /tmp/voacapl
-          cd /tmp/voacapl
-          git checkout c12a98b348c39f36f2659b8b3aa97b86284c8a1d
-          autoreconf -fi
-          ./configure -q
-          make
-          sudo make install
-          makeitshfbc
-          voacapl ~/itshfbc > /dev/null && echo "voacapl OK"
-      - name: Generar informe de prueba
-        run: |
-          python -m propagacion --sin-rbn --salida /tmp/informe 2>&1 | grep -vE '^DEBUG'
-          echo "Secciones sin datos: $(grep -c '_Sin datos esta semana._' /tmp/informe/informe.md || true)"
-          ls -la /tmp/informe
-          sed -n '/^## 3/,/^## 5/p' /tmp/informe/informe.md
+          curl -sL --max-time 120 "https://calendar.google.com/calendar/ical/9o3or51jjdsantmsqoadmm949k%40group.calendar.google.com/public/basic.ics" -o /tmp/c.ics
+          echo "eventos: $(grep -c BEGIN:VEVENT /tmp/c.ics)  RRULE: $(grep -c ^RRULE /tmp/c.ics)"
+          echo "---- años de DTSTART"; grep -oE '^DTSTART[^:]*:[0-9]{4}' /tmp/c.ics | sed -E 's/.*:([0-9]{4})/\1/' | sort | uniq -c
+          echo "---- variantes de DTSTART"; grep -oE '^DTSTART[^:]*' /tmp/c.ics | sort | uniq -c
+          echo "---- ejemplos RRULE"; grep -B8 -A3 '^RRULE' /tmp/c.ics | head -60
+          echo "---- eventos de oct 2026"; grep -A12 -E '^DTSTART[^:]*:202610' /tmp/c.ics | grep -E '^(DTSTART|SUMMARY)' | head -20
+          echo "---- RSS completo"
+          curl -sL --max-time 60 https://www.contestcalendar.com/calendar.rss | grep -E '<title>|<description>|<link>' | head -120
+          echo "---- AMSAT nasabare"
+          curl -sL --max-time 60 https://www.amsat.org/tle/current/nasabare.txt -o /tmp/t -w 'HTTP %{http_code} %{size_download}\n'
+          head -9 /tmp/t; grep -nE '^(ISS|SO-50|AO-7|AO-27|FO-29|RS-44|IO-86|PO-101|AO-123|SO-125)' /tmp/t
