@@ -11,25 +11,19 @@ jobs:
   probar:
     runs-on: ubuntu-latest
     steps:
-      - name: Consulta real a GIRO scaled.php (ronda 4)
+      - name: Redirección de GIRO scaled.php (ronda 5)
         run: |
           U=https://giro.uml.edu/didbase/scaled.php
-          curl -sL --max-time 120 -X POST "$U" \
+          curl -s --max-time 120 -D /tmp/h -o /tmp/b "$U" \
             --data-urlencode "location=EA036" --data-urlencode "chosenchars[]=0" \
             --data-urlencode "date_start=2026-09-20 00:00" --data-urlencode "date_end=2026-09-20 06:00" \
-            --data-urlencode "DMUF=3000" --data-urlencode "query_submit=Search" \
-            -o /tmp/p.html -w 'HTTP %{http_code} %{content_type} %{size_download}\n'
-          echo "---- enlaces del resultado"
-          grep -oiE '(href|src|action)="[^"]*"' /tmp/p.html | sort -u | grep -viE 'css|bootstrap|jquery|menuBar' | head -30
-          echo "---- <pre> / tablas del resultado"
-          python3 - <<'PY'
-          import re
-          h = open('/tmp/p.html', encoding='utf-8', errors='replace').read()
-          i = h.find('query_submit')
-          for m in re.finditer(r'<pre[^>]*>(.*?)</pre>', h, re.S | re.I):
-              print('PRE:', m.group(1)[:1500])
-          txt = re.sub(r'<[^>]+>', ' ', h[i:])
-          txt = re.sub(r'[ \t]+', ' ', txt)
-          lines = [l.strip() for l in txt.splitlines() if l.strip()]
-          print('\n'.join(lines[-80:]))
-          PY
+            --data-urlencode "DMUF=3000" --data-urlencode "query_submit=Search"
+          echo "---- cabeceras"; cat /tmp/h
+          echo "---- cuerpo"; head -c 1500 /tmp/b; echo
+          LOC=$(grep -i '^location:' /tmp/h | tail -1 | cut -d' ' -f2- | tr -d '\r')
+          if [ -z "$LOC" ]; then LOC=$(grep -oiE '(url=|href=")[^"]*DIDB[^"]*' /tmp/b | head -1 | sed -E 's/^(url=|href=")//'); fi
+          echo "---- destino: $LOC"
+          if [ -n "$LOC" ]; then
+            curl -sL --max-time 120 "$LOC" -o /tmp/r -w 'HTTP %{http_code} %{content_type} %{size_download}\n'
+            head -c 2500 /tmp/r; echo
+          fi
