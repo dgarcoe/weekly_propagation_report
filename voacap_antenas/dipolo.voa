@@ -1,0 +1,10 @@
+Dipolo horizontal media onda a 0,5 lambda (EA1RKV)
+ 8     8 parameters
+  0.00  [ 1] Max Gain dBi..:
+  23    [ 2] Antenna Type..:
+   4    [ 3] Dielectric....:
+.00100  [ 4] Conductivity..:
+14.000  [ 5] Operating Freq:
+  -.50  [ 6] Antenna Length:
+  -.50  [ 7] Antenna Height:
+   0.0  [ 8] Gain ab dipole:

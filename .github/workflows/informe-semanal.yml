@@ -1,0 +1,99 @@
+name: Informe semanal de propagación
+
+on:
+  schedule:
+    # Lunes a las 06:17 UTC (minuto no redondo para evitar la hora punta de GitHub Actions)
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      fecha:
+        description: "Fecha de referencia AAAA-MM-DD (vacío = hoy)"
+        required: false
+        default: ""
+      sin_rbn:
+        description: "No descargar RBN (más rápido)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: informe-semanal
+  cancel-in-progress: false
+
+env:
+  # Commit fijado de voacapl para que la predicción sea reproducible
+  VOACAPL_REF: c12a98b348c39f36f2659b8b3aa97b86284c8a1d
+
+jobs:
+  informe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Dependencias Python
+        run: pip install -r requirements.txt
+
+      - name: Compilar e instalar voacapl
+        # Si falla, el informe se genera igualmente con la sección VOACAP «sin datos».
+        continue-on-error: true
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q gfortran
+          git clone https://github.com/jawatson/voacapl.git /tmp/voacapl
+          cd /tmp/voacapl
+          git checkout "$VOACAPL_REF"
+          ./configure -q
+          make            # sin -j: la compilación en paralelo falla por dependencias de módulos Fortran
+          sudo make install
+          makeitshfbc
+
+      - name: Caché de descargas
+        uses: actions/cache@v4
+        with:
+          path: cache
+          key: descargas-${{ github.run_id }}
+          restore-keys: descargas-
+
+      - name: Generar borrador
+        id: gen
+        env:
+          FECHA: ${{ inputs.fecha }}
+          SIN_RBN: ${{ inputs.sin_rbn }}
+        run: |
+          ARGS=()
+          if [ -n "$FECHA" ]; then ARGS+=(--fecha "$FECHA"); fi
+          if [ "$SIN_RBN" = "true" ]; then ARGS+=(--sin-rbn); fi
+          MD=$(python -m propagacion "${ARGS[@]}" | tail -n 1)
+          DIR=$(dirname "$MD")
+          echo "dir=$DIR" >> "$GITHUB_OUTPUT"
+          echo "semana=$(basename "$DIR")" >> "$GITHUB_OUTPUT"
+          echo "### Borrador generado: \`$MD\`" >> "$GITHUB_STEP_SUMMARY"
+          grep -c "_Sin datos esta semana._" "$MD" | xargs -I{} echo "Secciones sin datos: {}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Abrir PR con el borrador
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: informe/${{ steps.gen.outputs.semana }}
+          add-paths: ${{ steps.gen.outputs.dir }}
+          commit-message: "Borrador del informe de propagación ${{ steps.gen.outputs.semana }}"
+          title: "Informe de propagación ${{ steps.gen.outputs.semana }}"
+          labels: informe
+          body: |
+            Borrador automático del informe semanal de propagación (**${{ steps.gen.outputs.semana }}**).
+
+            Antes de publicar:
+            - [ ] Un socio añade su comentario en la sección 5, entre `<!-- COMENTARIO -->` y `<!-- /COMENTARIO -->`, borrando la línea `PENDIENTE:`.
+            - [ ] Revisar las secciones marcadas «sin datos esta semana» (fuente caída).
+            - [ ] Revisar las gráficas en el móvil.
+
+            La comprobación `comentario-humano` falla mientras el comentario siga pendiente.
+          delete-branch: true
