@@ -107,7 +107,7 @@ def internet_falsa(monkeypatch, tmp_path):
             config.URL_WSPR_LIVE: lambda: fake_wspr_tsv().encode(),
             config.URL_GIRO: lambda: fake_giro().encode(),
             config.URL_CELESTRAK_AMATEUR: lambda: fake_tle().encode(),
-            config.URL_CONTEST_ICS: (FIX / "calendar.ics").read_bytes,
+            config.URL_CONTEST_RSS: (FIX / "calendar.rss").read_bytes,
         }
         if url in rutas:
             return rutas[url]()

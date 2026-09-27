@@ -1,8 +1,8 @@
 """GIRO / DIDBase (lgdc.uml.edu): foF2 de la ionosonda de El Arenosillo (EA036).
 
-El servicio ``DIDBGetValues`` devuelve texto plano: cabeceras con ``#`` y
+El servicio ``fastchar/getbest`` devuelve texto plano: cabeceras con ``#`` y
 filas ``<ISO-8601> <confianza> <foF2> <QD>``; los valores ausentes llegan
-como ``---``.
+como ``---``. Fechas de la consulta en formato ``AAAA/MM/DD hh:mm:ss``.
 """
 from __future__ import annotations
 
@@ -36,8 +36,8 @@ def descargar_fof2(inicio: date, fin: date, ursi: str = config.GIRO_URSI_ARENOSI
         "ursiCode": ursi,
         "charName": "foF2",
         "DMUF": "3000",
-        "fromDate": f"{inicio:%Y.%m.%d}",
-        "toDate": f"{fin:%Y.%m.%d}",
+        "fromDate": f"{inicio:%Y/%m/%d} 00:00:00",
+        "toDate": f"{fin:%Y/%m/%d} 00:00:00",
     }
     serie = parse_didb(fetch_text(config.URL_GIRO, params=params, max_age_h=12, timeout=120))
     if not serie:

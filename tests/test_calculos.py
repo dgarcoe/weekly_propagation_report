@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 import pytest
 
 from propagacion import charts, geo, solar
+from propagacion.periodo import Periodo
 from propagacion.sections import agenda, prevision, realidad
 
 
@@ -187,3 +188,15 @@ def test_lluvias_activas_en_agosto():
     nombres = [l["nombre"] for l in agenda.lluvias_activas(date(2026, 8, 10), date(2026, 8, 16))]
     assert "Perseidas" in nombres
     assert "Gemínidas" not in nombres
+
+
+@pytest.mark.parametrize("hoy, publicacion", [
+    (date(2026, 9, 28), date(2026, 9, 28)),     # lunes: el propio lunes
+    (date(2026, 9, 30), date(2026, 9, 28)),     # miércoles: el lunes de esa semana
+    (date(2026, 9, 27), date(2026, 9, 28)),     # domingo: ya cuenta como el lunes siguiente
+])
+def test_periodo(hoy, publicacion):
+    p = Periodo.para(hoy)
+    assert p.publicacion == publicacion
+    assert (p.inicio, p.fin) == (publicacion - timedelta(days=7), publicacion - timedelta(days=1))
+    assert p.sig_inicio == publicacion and p.etiqueta == "2026-W40"

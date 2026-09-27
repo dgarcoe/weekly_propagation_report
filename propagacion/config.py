@@ -67,27 +67,33 @@ URL_NOAA_CYCLE_PRED = "https://services.swpc.noaa.gov/json/solar-cycle/predicted
 URL_DRAO_FLUX = "https://www.spaceweather.gc.ca/solar_flux_data/daily_flux_values/fluxtable.txt"
 URL_WSPR_LIVE = "https://db1.wspr.live/"
 URL_RBN_DAY = "https://data.reversebeacon.net/rbn_history/{fecha:%Y%m%d}.zip"
-URL_GIRO = "https://lgdc.uml.edu/common/DIDBGetValues"
+# El antiguo servlet DIDBGetValues ya no existe; el formulario scaled.php redirige a este.
+URL_GIRO = "https://lgdc.uml.edu/fastchar/getbest"
 GIRO_URSI_ARENOSILLO = "EA036"
 URL_CELESTRAK_AMATEUR = "https://celestrak.org/NORAD/elements/gp.php?GROUP=amateur&FORMAT=tle"
-URL_CONTEST_ICS = "https://www.contestcalendar.com/calendar.ics"
+# RSS de WA7BNM: semana en curso + fin de semana siguiente. (El .ics antiguo da 404 y el
+# calendario de Google enlazado desde la web está sin actualizar.)
+URL_CONTEST_RSS = "https://www.contestcalendar.com/calendar.rss"
+# TLE: CelesTrak y, si no responde, el fichero de AMSAT.
+URL_AMSAT_TLE = "https://www.amsat.org/tle/current/nasabare.txt"
 
 # Prefijos para filtrar RBN (el fichero no trae locator): distrito EA1.
 RBN_CALL_REGEX = r"^E[A-H]1[A-Z]"
 
-# Satélites de aficionado que listamos (nombre tal cual en el TLE de CelesTrak).
-SATELITES = (
-    "ISS (ZARYA)",
-    "SO-50",
-    "AO-7",
-    "AO-27",
-    "FO-29",
-    "RS-44",
-    "IO-86",
-    "PO-101",
-    "AO-123",
-    "SO-125",
-)
+# Satélites de aficionado que listamos: nombre mostrado -> nombres posibles en los TLE
+# (CelesTrak escribe «ISS (ZARYA)» y «AO-7»; AMSAT, «ISS» y «AO-07»).
+SATELITES = {
+    "ISS": ("ISS (ZARYA)", "ISS"),
+    "SO-50": ("SO-50",),
+    "AO-7": ("AO-7", "AO-07"),
+    "AO-27": ("AO-27",),
+    "FO-29": ("FO-29",),
+    "RS-44": ("RS-44",),
+    "IO-86": ("IO-86",),
+    "PO-101": ("PO-101",),
+    "AO-123": ("AO-123",),
+    "SO-125": ("SO-125",),
+}
 
 HTTP_TIMEOUT = 60
 USER_AGENT = "EA1RKV-informe-propagacion/1.0 (+https://github.com/dgarcoe/weekly_propagation_report)"

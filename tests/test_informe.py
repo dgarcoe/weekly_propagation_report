@@ -39,10 +39,10 @@ def test_informe_completo(internet_falsa, tmp_path):
     assert "amanece a las" in md
 
     # Sección 4
-    assert "CQ World Wide DX Contest, RTTY" in md
-    assert "Contest de martes" not in md                # fuera del fin de semana
+    assert "TRC DX Contest" in md and "URC DX RTTY Contest" in md
+    assert "RSGB FT4 Contest" not in md                 # lunes: fuera del fin de semana
     assert "Oriónidas" in md
-    assert "ISS (ZARYA)" in md
+    assert "| ISS |" in md
 
     # Hueco del comentario y fuentes
     assert report.MARCA_INICIO in md and report.MARCA_FIN in md

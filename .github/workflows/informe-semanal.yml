@@ -47,14 +47,18 @@ jobs:
         continue-on-error: true
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y -q gfortran
+          sudo apt-get install -y -q gfortran automake autoconf
           git clone https://github.com/jawatson/voacapl.git /tmp/voacapl
           cd /tmp/voacapl
           git checkout "$VOACAPL_REF"
+          # Regenerar los ficheros de autotools: tras el clon, sus fechas pueden hacer que
+          # make intente ejecutar aclocal-1.15, que no existe en el runner.
+          autoreconf -fi
           ./configure -q
           make            # sin -j: la compilación en paralelo falla por dependencias de módulos Fortran
           sudo make install
           makeitshfbc
+          voacapl ~/itshfbc > /dev/null && echo "voacapl OK"
 
       - name: Caché de descargas
         uses: actions/cache@v4
