@@ -1,29 +1,40 @@
 name: Diagnóstico de fuentes
 
-# Comprueba desde el runner (que sí tiene red) qué URLs responden y con qué formato.
+# Genera un informe completo en el runner (que sí tiene red) sin abrir PR,
+# para comprobar que todas las fuentes responden.
 on:
   workflow_dispatch:
   push:
     branches: ["claude/**"]
-    paths: [".github/workflows/diagnostico.yml"]
+    paths: [".github/workflows/diagnostico.yml", "propagacion/**"]
 
 jobs:
   probar:
     runs-on: ubuntu-latest
     steps:
-      - name: Redirección de GIRO scaled.php (ronda 5)
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Compilar e instalar voacapl
+        continue-on-error: true
         run: |
-          U=https://giro.uml.edu/didbase/scaled.php
-          curl -s --max-time 120 -D /tmp/h -o /tmp/b "$U" \
-            --data-urlencode "location=EA036" --data-urlencode "chosenchars[]=0" \
-            --data-urlencode "date_start=2026-09-20 00:00" --data-urlencode "date_end=2026-09-20 06:00" \
-            --data-urlencode "DMUF=3000" --data-urlencode "query_submit=Search"
-          echo "---- cabeceras"; cat /tmp/h
-          echo "---- cuerpo"; head -c 1500 /tmp/b; echo
-          LOC=$(grep -i '^location:' /tmp/h | tail -1 | cut -d' ' -f2- | tr -d '\r')
-          if [ -z "$LOC" ]; then LOC=$(grep -oiE '(url=|href=")[^"]*DIDB[^"]*' /tmp/b | head -1 | sed -E 's/^(url=|href=")//'); fi
-          echo "---- destino: $LOC"
-          if [ -n "$LOC" ]; then
-            curl -sL --max-time 120 "$LOC" -o /tmp/r -w 'HTTP %{http_code} %{content_type} %{size_download}\n'
-            head -c 2500 /tmp/r; echo
-          fi
+          sudo apt-get update -q
+          sudo apt-get install -y -q gfortran automake autoconf
+          git clone https://github.com/jawatson/voacapl.git /tmp/voacapl
+          cd /tmp/voacapl
+          git checkout c12a98b348c39f36f2659b8b3aa97b86284c8a1d
+          autoreconf -fi
+          ./configure -q
+          make
+          sudo make install
+          makeitshfbc
+          voacapl ~/itshfbc > /dev/null && echo "voacapl OK"
+      - name: Generar informe de prueba
+        run: |
+          python -m propagacion --sin-rbn --salida /tmp/informe 2>&1 | grep -vE '^DEBUG'
+          echo "Secciones sin datos: $(grep -c '_Sin datos esta semana._' /tmp/informe/informe.md || true)"
+          ls -la /tmp/informe
+          sed -n '/^## 3/,/^## 5/p' /tmp/informe/informe.md
