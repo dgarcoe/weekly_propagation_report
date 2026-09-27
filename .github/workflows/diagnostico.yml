@@ -11,27 +11,21 @@ jobs:
   probar:
     runs-on: ubuntu-latest
     steps:
-      - name: Probar endpoints (ronda 2)
+      - name: Probar GIRO scaled.php (ronda 3)
         run: |
-          probe() {
-            code=$(curl -sL -A "EA1RKV-informe-propagacion/1.0" -o /tmp/r -w '%{http_code} %{content_type} %{size_download}' --max-time 60 "$1")
-            echo "=== $code  $1"
-            head -c ${2:-600} /tmp/r | tr -d '\r'; echo
-          }
-          echo "---- scaled.php: formularios, scripts y URLs"
-          curl -sL --max-time 60 https://giro.uml.edu/didbase/scaled.php > /tmp/s.html
-          grep -oiE '(action|src|href)="[^"]*"' /tmp/s.html | sort -u
-          grep -oiE "(https?:)?//[a-z.]*uml\.edu[^\"' <>]*" /tmp/s.html | sort -u
-          grep -iE 'DIDB|GetValues|servlet|ursi|charName|fromDate|\.jsp|\.php' /tmp/s.html | head -60
-          echo "---- estación EA036 en la lista"
-          curl -sL --max-time 60 https://lgdc.uml.edu/common/DIDBFastStationList | grep -iE -B2 -A2 'EA036|Arenosillo' | head -20
-          echo "---- servlets candidatos"
-          Q="ursiCode=EA036&charName=foF2&DMUF=3000&fromDate=2026.09.14&toDate=2026.09.21"
-          for path in common/DIDBGetValues common/DIDBGetValues.jsp common/DIDBGetChars common/DIDBGetCharValues common/GetValues DIDBGetValues didbase/DIDBGetValues common/DIDBYearList; do
-            probe "https://lgdc.uml.edu/$path?$Q" 300
+          U=https://giro.uml.edu/didbase/scaled.php
+          curl -sL --max-time 60 "$U" > /tmp/s.html
+          echo "---- campos del formulario"
+          grep -oiE '<(input|select|textarea)[^>]*>' /tmp/s.html | grep -v 'type="button"' | sort -u | head -80
+          echo "---- opciones de estación con EA036"
+          grep -oiE '<option[^>]*>[^<]*' /tmp/s.html | grep -iE 'EA036|ARENOSILLO' | head
+          echo "---- opciones (muestra)"
+          grep -oiE '<option[^>]*>[^<]*' /tmp/s.html | head -40
+          echo "---- javascript inline relevante"
+          grep -iE 'submit|ursi|station|char' /tmp/s.html | grep -v '<option' | head -40
+          echo "---- POST de prueba"
+          for extra in "ursiCode=EA036&charName=foF2" "ursiCode=EA036&charName[]=foF2" "ursiCode=EA036&foF2=on" "station=EA036&charName=foF2"; do
+            echo "== $extra"
+            curl -sL --max-time 90 -X POST "$U" --data "date_start=2026-09-20 00:00&date_end=2026-09-20 03:00&$extra&DMUF=3000" -o /tmp/p.html -w '%{http_code} %{size_download}\n'
+            sed -e 's/<[^>]*>/ /g' /tmp/p.html | tr -s ' \n' | grep -iE -A12 'foF2|EA036|error|no data' | head -30
           done
-          probe "https://lgdc.uml.edu/common/DIDBDayStationStatistic?ursiCode=EA036&year=2026&month=9" 400
-          echo "---- contest calendar"
-          probe "https://calendar.google.com/calendar/ical/9o3or51jjdsantmsqoadmm949k%40group.calendar.google.com/public/basic.ics" 1500
-          probe "https://www.contestcalendar.com/calendar.rss" 1200
-          probe "https://www.contestcalendar.com/weeklycal.txt" 800
