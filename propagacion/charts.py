@@ -126,9 +126,28 @@ def heatmap_edges(maxv: int) -> list[int]:
     return [0] + inner + [maxv + 1]
 
 
+def techo_muf(bandas: list[str], frecuencias: dict[str, float], muf: dict[int, float]
+              ) -> list[tuple[int, float]]:
+    """(hora, y) de la frontera entre bandas por debajo y por encima de la MUF.
+
+    Las filas van de la banda más alta (y = 0) a la más baja; y es el borde superior
+    de la banda más alta que la MUF deja pasar.
+    """
+    out = []
+    for h in range(24):
+        if h not in muf:
+            continue
+        abiertas = [i for i, b in enumerate(bandas) if frecuencias[b] <= muf[h]]
+        out.append((h, (min(abiertas) if abiertas else len(bandas)) - 0.5))
+    return out
+
+
 def heatmap_hora_banda(matriz: np.ndarray, bandas: list[str], path: Path, titulo: str,
-                       nota: str) -> Path:
-    """Filas = bandas (de más alta a más baja), columnas = hora UTC."""
+                       nota: str, techo: list[tuple[int, float]] | None = None) -> Path:
+    """Filas = bandas (de más alta a más baja), columnas = hora UTC.
+
+    ``techo``: (hora, y) de la MUF medida, dibujada como una línea escalonada.
+    """
     _style()
     fig, ax = plt.subplots(figsize=(8, 0.42 * len(bandas) + 1.6))
     maxv = max(1, int(matriz.max()))
@@ -150,6 +169,17 @@ def heatmap_hora_banda(matriz: np.ndarray, bandas: list[str], path: Path, titulo
     ax.grid(which="minor", color=SURFACE, linewidth=2)
     ax.tick_params(which="minor", length=0)
     ax.tick_params(which="major", length=0)
+    if techo:
+        xs, ys = [], []
+        for h, y in techo:
+            xs += [h - 0.5, h + 0.5]
+            ys += [y, y]
+        ax.plot(xs, ys, color=SERIES_2, lw=2.4, solid_joinstyle="miter", zorder=5)
+        h_lab, y_lab = min(techo, key=lambda t: t[1])
+        ax.annotate("MUF(3000) medida", (h_lab, y_lab), xytext=(0, 6), textcoords="offset points",
+                    color=INK, fontsize=9, fontweight="bold", ha="center", va="bottom",
+                    bbox=dict(boxstyle="round,pad=0.2", fc=SURFACE, ec=SERIES_2, lw=1), zorder=6)
+        ax.set_ylim(len(bandas) - 0.5, -1.4)
     cb = fig.colorbar(im, ax=ax, fraction=0.035, pad=0.02)
     cb.set_label("Spots", color=INK_2)
     cb.outline.set_visible(False)
@@ -237,21 +267,102 @@ def voacap_multiples(tablas: dict[str, np.ndarray], bandas: list[str], path: Pat
 
 
 def fof2_diario(horas: list[int], mediana: list[float], p25: list[float], p75: list[float],
-                path: Path, nota: str) -> Path:
+                path: Path, nota: str, estaciones: dict[str, dict[int, float]] | None = None,
+                fmin: dict[int, float] | None = None, titulo: str = "Frecuencia crítica foF2 · El Arenosillo"
+                ) -> Path:
+    """Perfil diario de foF2 (mediana e intercuartil) con referencias de 80/40 m.
+
+    ``estaciones``: perfiles de cada ionosonda (líneas finas grises, etiquetadas);
+    ``fmin``: suelo de absorción (línea discontinua).
+    """
     _style()
-    fig, ax = plt.subplots(figsize=(8, 4.2))
+    fig, ax = plt.subplots(figsize=(8, 4.4))
     ax.fill_between(horas, p25, p75, color="#cde2fb", lw=0, label="Rango intercuartil")
-    ax.plot(horas, mediana, color=SERIES_1, lw=2.4, marker="o", ms=5, label="Mediana foF2")
+    etiquetas = []
+    for nombre, perf in (estaciones or {}).items():
+        hs = sorted(perf)
+        ax.plot(hs, [perf[h] for h in hs], color=MUTED, lw=1, alpha=0.9)
+        if hs:
+            etiquetas.append([perf[hs[-1]], hs[-1], nombre])
+    # Etiquetas directas al final de cada línea, separadas para que no se pisen
+    etiquetas.sort()
+    for i in range(1, len(etiquetas)):
+        etiquetas[i][0] = max(etiquetas[i][0], etiquetas[i - 1][0] + 0.45)
+    for y, x, nombre in etiquetas:
+        ax.text(x + 0.25, y, nombre, color=INK_2, fontsize=8, va="center")
+    ax.plot(horas, mediana, color=SERIES_1, lw=2.4, marker="o", ms=5,
+            label="Mediana foF2" + (" (estimada en Vigo)" if estaciones else ""))
+    if fmin:
+        hs = sorted(fmin)
+        ax.plot(hs, [fmin[h] for h in hs], color=SERIES_2, lw=2, ls=(0, (5, 3)),
+                label="fmin (absorción)")
     for f, nombre in ((3.6, "80 m"), (7.1, "40 m")):
         ax.axhline(f, color=INK_2, lw=1, ls=(0, (4, 3)))
-        ax.text(23.4, f, f" {nombre}", color=INK_2, va="center", fontsize=10)
+        # 80 m por debajo de su línea: de noche la foF2 suele rondar esa zona
+        ax.text(0.15, f + (0.08 if f > 5 else -0.08), nombre, color=INK_2,
+                va="bottom" if f > 5 else "top", fontsize=10)
     ax.set_xlim(0, 23.3)
     ax.set_xticks(range(0, 24, 3))
     ax.set_xlabel("Hora UTC")
     ax.set_ylabel("MHz")
     ax.set_ylim(0, max(9, math.ceil(max(p75) + 1)))
     ax.grid(axis="y")
-    ax.set_title("Frecuencia crítica foF2 · El Arenosillo")
+    ax.set_title(titulo)
     ax.legend(loc="upper left", fontsize=10)
+    ax.set_xlim(0, 23.3 if not etiquetas else 25.6)
+    ax.set_xticks(range(0, 24, 3))
     _nota(fig, nota)
     return _save(fig, path)
+
+
+STATUS_GOOD, STATUS_WARN, STATUS_CRIT = "#0ca30c", "#fab219", "#d03b3b"
+DIV_NEG, DIV_POS = "#e34948", "#2a78d6"
+
+
+def anomalia_fof2(desv: list[tuple], kp3h: list[tuple], path: Path, rango: tuple, nota: str) -> Path:
+    """Dos paneles con el mismo eje de tiempo (nunca doble eje Y):
+    arriba, % de foF2 respecto a lo normal; abajo, Kp trihorario con semáforo."""
+    _style()
+    fig, (ax, ak) = plt.subplots(2, 1, figsize=(8, 5.4), sharex=True,
+                                 gridspec_kw={"height_ratios": [2.2, 1], "hspace": 0.12})
+    t = np.array([d for d, _ in desv], dtype="datetime64[m]")
+    v = np.array([x for _, x in desv], dtype=float)
+    if len(t):
+        ax.fill_between(t, 0, v, where=v >= 0, color=DIV_POS, alpha=0.35, lw=0, step="mid")
+        ax.fill_between(t, 0, v, where=v < 0, color=DIV_NEG, alpha=0.35, lw=0, step="mid")
+        ax.plot(t, v, color=INK_2, lw=1, drawstyle="steps-mid")
+    ax.axhline(0, color=AXIS, lw=1)
+    ax.axhline(-20, color=INK_2, lw=1, ls=(0, (4, 3)))
+    ax.text(np.datetime64(rango[0]), -20, " −20 %: tormenta ionosférica negativa", color=INK_2,
+            fontsize=9, va="bottom")
+    lim = max(30, float(np.nanmax(np.abs(v))) * 1.1 if len(v) else 30)
+    ax.set_ylim(-lim, lim)
+    ax.set_ylabel("foF2 vs normal (%)")
+    ax.grid(axis="y")
+    ax.set_title("¿Ionosfera mejor o peor de lo normal?")
+
+    if kp3h:
+        tk = np.array([d for d, _ in kp3h], dtype="datetime64[m]") + np.timedelta64(90, "m")
+        kv = np.array([k for _, k in kp3h], dtype=float)
+        col = [STATUS_CRIT if k >= 5 else STATUS_WARN if k >= 4 else STATUS_GOOD for k in kv]
+        ak.bar(tk, kv, width=np.timedelta64(170, "m"), color=col, edgecolor=SURFACE, lw=0.5)
+    ak.axhline(5, color=STATUS_CRIT, lw=1, ls=(0, (4, 3)))
+    ak.text(np.datetime64(rango[1]), 5, "tormenta (Kp 5) ", color=INK_2, fontsize=8, ha="right",
+            va="bottom")
+    ak.set_ylim(0, 9)
+    ak.set_yticks([0, 3, 5, 9])
+    ak.set_ylabel("Kp")
+    ak.grid(axis="y")
+    ak.set_xlim(np.datetime64(rango[0]), np.datetime64(rango[1]))
+    ak.xaxis.set_major_locator(mdates.DayLocator())
+    ak.xaxis.set_major_formatter(FuncFormatter(_dia_es))
+    _nota(fig, nota)
+    return _save(fig, path)
+
+
+DIAS_CORTOS = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"]
+
+
+def _dia_es(x, _pos=None) -> str:
+    d = mdates.num2date(x)
+    return f"{DIAS_CORTOS[d.weekday()]} {d.day}"

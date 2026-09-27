@@ -143,7 +143,9 @@ def tabla_continentes(contactos: list[Contacto], bandas: list[str]) -> list[dict
     return filas
 
 
-def construir(p: Periodo, outdir: Path, usar_rbn: bool = True) -> dict:
+def construir(p: Periodo, outdir: Path, usar_rbn: bool = True,
+              muf3000: dict[int, float] | None = None) -> dict:
+    """``muf3000``: MUF(3000)F2 medida por hora UTC, para dibujarla sobre el mapa de calor."""
     res: dict = {"ok": False, "fuentes": [], "avisos": []}
     contactos: list[Contacto] = []
     try:
@@ -179,7 +181,12 @@ def construir(p: Periodo, outdir: Path, usar_rbn: bool = True) -> dict:
         m, bandas, outdir / "heatmap_hora_banda.png",
         "Spots desde/hacia Galicia por hora y banda",
         f"WSPR + RBN · {p.inicio:%d/%m}–{p.fin:%d/%m/%Y} · cuadrículas "
-        f"{', '.join(config.GALICIA_SQUARES)} (WSPR) y distrito EA1 (RBN)").name
+        f"{', '.join(config.GALICIA_SQUARES)} (WSPR) y distrito EA1 (RBN)"
+        + (" · línea: MUF(3000)F2 medida (ionosondas, estimada en Vigo)" if muf3000 else ""),
+        techo=charts.techo_muf(bandas, {b: config.BANDAS[b][2] for b in bandas}, muf3000)
+        if muf3000 else None).name
+    res["techo_muf"] = bool(muf3000)
+    res["_contactos"] = contactos       # para cruzarlos con la ionosfera (no se imprime)
     # Bandas y horas más activas (texto automático)
     por_banda = Counter(c.banda for c in contactos)
     res["bandas_top"] = [{"banda": b, "spots": n} for b, n in por_banda.most_common(4)]

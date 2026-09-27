@@ -8,23 +8,20 @@ from __future__ import annotations
 
 import logging
 import statistics
-from collections import defaultdict
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import numpy as np
 
-from .. import charts, config, geo, solar, voacap
+from .. import charts, config, geo, ionosfera as io, solar, voacap
 from ..http import FuenteNoDisponible
 from ..periodo import Periodo, fecha_corta
-from ..sources import giro, noaa
+from ..sources import noaa
 
 log = logging.getLogger(__name__)
 
 FUENTES = {
     "voacap": "VOACAP (voacapl, port para Linux de J. Watson; https://github.com/jawatson/voacapl)",
-    "giro": "GIRO / DIDBase, Lowell GIRO Data Center (https://giro.uml.edu/), datos CC-BY-NC-SA 4.0 "
-            "de la ionosonda de El Arenosillo EA036 (INTA)",
     "noaa_pred": "NOAA SWPC — predicción del ciclo solar",
 }
 
@@ -118,18 +115,6 @@ DISTANCIAS_REGIONALES = [
 ]
 
 
-def perfil_horario(serie: list[tuple[datetime, float]]) -> dict[int, tuple[float, float, float]]:
-    """{hora UTC: (p25, mediana, p75)} de foF2."""
-    por_hora: dict[int, list[float]] = defaultdict(list)
-    for t, f in serie:
-        por_hora[t.hour].append(f)
-    out = {}
-    for h, vals in por_hora.items():
-        q = np.percentile(vals, [25, 50, 75])
-        out[h] = (float(q[0]), float(q[1]), float(q[2]))
-    return out
-
-
 def ventanas(horas_ok: list[int]) -> str:
     """[6,7,8,9,17,18] -> '06–10, 17–19 UTC'."""
     if not horas_ok:
@@ -151,37 +136,82 @@ def ventanas(horas_ok: list[int]) -> str:
     return ", ".join(f"{a:02d}–{b % 24:02d}" for a, b in tramos) + " UTC"
 
 
-def construir_nvis(p: Periodo, outdir: Path) -> dict:
-    serie = [(t, f) for t, f in giro.descargar_fof2(p.inicio, p.fin + timedelta(days=1))
-             if p.inicio <= t.date() <= p.fin]
-    if len(serie) < 24:
-        raise FuenteNoDisponible(f"GIRO: solo {len(serie)} medidas de foF2 en la semana")
-    perfil = perfil_horario(serie)
-    horas = sorted(perfil)
+BANDAS_3000 = ("20m", "17m", "15m", "12m", "10m")
+ALTURA_POR_DEFECTO_KM = 300.0
+
+
+def estado_regional(fof2: dict[int, float], hmf2: dict[int, float], fmin: dict[int, float],
+                    dist: float, f: float) -> tuple[list[int], list[int]]:
+    """(horas abiertas, horas en que la MUF llega pero la absorción cierra la banda).
+
+    MUF = foF2 · sec φ con la hmF2 medida de cada hora (300 km si falta);
+    LUF ≈ fmin · √sec φ_D (absorción en la capa D).
+    """
+    abiertas, absorcion = [], []
+    for h in sorted(fof2):
+        muf = fof2[h] * solar.sec_incidence(dist, hmf2.get(h, ALTURA_POR_DEFECTO_KM))
+        luf = io.luf_absorcion(fmin[h], dist) if h in fmin else None
+        estado = io.estado_banda(f, muf, luf)
+        if estado == "abierta":
+            abiertas.append(h)
+        elif estado == "absorcion":
+            absorcion.append(h)
+    return abiertas, absorcion
+
+
+def construir_nvis(p: Periodo, outdir: Path, iono: dict) -> dict:
+    if not iono.get("ok"):
+        raise FuenteNoDisponible("sin datos de ionosondas")
+    vigo = iono["vigo"]
+    fof2, hmf2, fmin, mufd = vigo["foF2"], vigo["hmF2"], vigo["fmin"], vigo["MUF(D)"]
+    if len(fof2) < 12:
+        raise FuenteNoDisponible(f"perfil de foF2 incompleto ({len(fof2)} h)")
+    horas = sorted(fof2)
+    hm_med = statistics.median(hmf2.values()) if hmf2 else ALTURA_POR_DEFECTO_KM
     filas = []
     for nombre, dist in DISTANCIAS_REGIONALES:
-        sec = solar.sec_incidence(dist)
-        fila = {"trayecto": nombre, "factor": sec}
+        fila = {"trayecto": nombre, "factor": solar.sec_incidence(dist, hm_med)}
         for banda, f in (("80m", 3.6), ("40m", 7.1)):
-            # Abierta si la MUF mediana supera la frecuencia con un 10 % de margen
-            fila[banda] = ventanas([h for h in horas if perfil[h][1] * sec * 0.9 >= f])
-        fila["muf_max"] = max(perfil[h][1] for h in horas) * sec
-        fila["muf_min"] = min(perfil[h][1] for h in horas) * sec
+            abiertas, absorcion = estado_regional(fof2, hmf2, fmin, dist, f)
+            fila[banda] = ventanas(abiertas)
+            fila[banda + "_absorcion"] = ventanas(absorcion) if absorcion else None
+        mufs = [fof2[h] * solar.sec_incidence(dist, hmf2.get(h, ALTURA_POR_DEFECTO_KM)) for h in horas]
+        fila["muf_min"], fila["muf_max"] = min(mufs), max(mufs)
         filas.append(fila)
-    fof2_mediana = statistics.median(f for _, f in serie)
+    dx3000 = None
+    if mufd:
+        dx3000 = {
+            "muf_min": min(mufd.values()), "muf_max": max(mufd.values()),
+            "hora_max": max(mufd, key=mufd.get),
+            "bandas": [{"banda": b, "ventana": ventanas([h for h, m in mufd.items()
+                                                         if m * 0.9 >= config.BANDAS[b][2]])}
+                       for b in BANDAS_3000],
+        }
+    info = {e.ursi: e for e in config.IONOSONDAS}
+    estaciones = {info[u].nombre: {h: q[1] for h, q in iono["perfiles"][u]["foF2"].items()}
+                  for u in iono["usadas"]} if len(iono["usadas"]) > 1 else None
+    n_iono = sum(len(iono["medidas"][u]) for u in iono["usadas"])
+    p25, p75 = iono["vigo_p25"], iono["vigo_p75"]
     return {
         "ok": True,
-        "medidas": len(serie),
-        "fof2_max": max(perfil[h][1] for h in horas),
-        "fof2_min": min(perfil[h][1] for h in horas),
-        "hora_max": max(horas, key=lambda h: perfil[h][1]),
-        "fof2_mediana": fof2_mediana,
+        "estaciones": [info[u].nombre for u in iono["usadas"]],
+        "interpolado": len(iono["usadas"]) > 1,
+        "fof2_max": max(fof2.values()),
+        "fof2_min": min(fof2.values()),
+        "hora_max": max(horas, key=lambda h: fof2[h]),
+        "fof2_mediana": statistics.median(fof2.values()),
+        "hmf2_mediana": hm_med if hmf2 else None,
+        "fmin_max": max(fmin.values()) if fmin else None,
         "filas": filas,
+        "dx3000": dx3000,
         "grafica": charts.fof2_diario(
-            horas, [perfil[h][1] for h in horas], [perfil[h][0] for h in horas],
-            [perfil[h][2] for h in horas], outdir / "fof2_arenosillo.png",
-            f"GIRO DIDBase · El Arenosillo (EA036) · {p.inicio:%d/%m}–{p.fin:%d/%m/%Y} · "
-            f"{len(serie)} ionogramas").name,
+            horas, [fof2[h] for h in horas], [p25.get(h, fof2[h]) for h in horas],
+            [p75.get(h, fof2[h]) for h in horas], outdir / "fof2_arenosillo.png",
+            f"GIRO DIDBase · {', '.join(info[u].nombre for u in iono['usadas'])} · "
+            f"{p.inicio:%d/%m}–{p.fin:%d/%m/%Y} · {n_iono} ionogramas · CS ≥ {io.CS_MINIMO}",
+            estaciones=estaciones, fmin=fmin or None,
+            titulo="Frecuencia crítica foF2" + (" · estimada en Vigo" if estaciones else " · El Arenosillo"),
+        ).name,
     }
 
 
@@ -263,7 +293,7 @@ def construir_linea_gris(p: Periodo) -> dict:
             "filas": filas}
 
 
-def construir(p: Periodo, outdir: Path, sol: dict) -> dict:
+def construir(p: Periodo, outdir: Path, sol: dict, iono: dict | None = None) -> dict:
     res: dict = {"fuentes": [], "avisos": []}
     outlook = (sol.get("outlook") or {}).get("sfi_medio")
     sfi_sem = (sol.get("sfi") or {}).get("media")
@@ -275,8 +305,7 @@ def construir(p: Periodo, outdir: Path, sol: dict) -> dict:
         log.warning("VOACAP: %s", e)
         res["voacap"] = {"ok": False, "motivo": str(e)}
     try:
-        res["nvis"] = construir_nvis(p, outdir)
-        res["fuentes"].append(FUENTES["giro"])
+        res["nvis"] = construir_nvis(p, outdir, iono or {})
     except FuenteNoDisponible as e:
         log.warning("GIRO: %s", e)
         res["nvis"] = {"ok": False, "motivo": str(e)}

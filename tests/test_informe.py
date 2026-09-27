@@ -36,6 +36,15 @@ def test_informe_completo(internet_falsa, tmp_path):
         assert "SSN usado" in md
     assert (out / "fof2_arenosillo.png").exists()
     assert "Vigo – Madrid" in md
+
+    # La ionosfera medida (varias ionosondas, datos sintéticos de conftest)
+    assert "Roquetes (Ebro)" in md and "Dourbes" in md and "estimada en Vigo" in md
+    assert "**Tormenta ionosférica negativa:** el vie 25/9" in md        # tras el Kp 5,33 del 24
+    assert (out / "fof2_vs_normal.png").exists()
+    assert "**Sí, y fuerte:**" in md                                     # Es de 12 MHz en Roquetes
+    assert "#### Teoría frente a realidad" in md
+    assert "MUF(3000)F2 medida" in md and "_absorción:" in md
+    assert "se vio en 2 noche(s)" in md                                  # spread-F 22 y 26
     assert "amanece a las" in md
 
     # Sección 4

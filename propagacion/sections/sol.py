@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import logging
 import statistics
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from .. import charts, solar
@@ -92,7 +92,7 @@ def construir(p: Periodo, outdir: Path) -> dict:
         res["avisos"].append("Índices geomagnéticos no disponibles.")
 
     # --- Tabla diaria -------------------------------------------------------------
-    por_dia = {d: {"fecha": fecha_corta(d), "sfi": None, "ssn": None, "ap": None, "kp": None}
+    por_dia = {d: {"fecha": fecha_corta(d), "fecha_d": d, "sfi": None, "ssn": None, "ap": None, "kp": None}
                for d in p.dias()}
     for d in dsd:
         if d.fecha in por_dia:
@@ -105,6 +105,12 @@ def construir(p: Periodo, outdir: Path) -> dict:
     for fila in por_dia.values():
         fila["semaforo"] = solar.semaforo_kp(fila["kp"]).emoji if fila["kp"] is not None else "—"
     res["dias"] = list(por_dia.values())
+    # Kp trihorario (para cruzarlo con la ionosfera): del DGD y, si falta, del JSON
+    kp3h = {datetime(d.fecha.year, d.fecha.month, d.fecha.day) + timedelta(hours=3 * i): k
+            for d in dgd for i, k in enumerate(d.kp)}
+    for t, k in kp_json:
+        kp3h.setdefault(t.replace(minute=0, second=0, microsecond=0), k)
+    res["kp3h"] = sorted(kp3h.items())
 
     # --- Fulguraciones ----------------------------------------------------------------
     fl: dict = {"lista": [], "m": 0, "x": 0}

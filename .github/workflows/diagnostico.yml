@@ -1,38 +1,47 @@
 name: Diagnóstico de fuentes
 
+# Genera un informe completo en el runner sin abrir PR, para comprobar que todas
+# las fuentes responden. Se lanza a mano (Run workflow) o al tocar el código en
+# una rama claude/**.
 on:
   workflow_dispatch:
   push:
     branches: ["claude/**"]
-    paths: [".github/workflows/diagnostico.yml"]
+    paths: [".github/workflows/diagnostico.yml", "propagacion/**"]
 
 jobs:
   probar:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - name: GIRO - varias magnitudes y estaciones
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Compilar e instalar voacapl
+        continue-on-error: true
         run: |
-          U=https://giro.uml.edu/didbase/scaled.php
-          echo "---- nombres de parámetros vía formulario (varias magnitudes)"
-          curl -s --max-time 120 -D /tmp/h -o /dev/null "$U" \
-            --data-urlencode "location=EA036" \
-            --data-urlencode "chosenchars[]=0" --data-urlencode "chosenchars[]=1" --data-urlencode "chosenchars[]=3" \
-            --data-urlencode "chosenchars[]=8" --data-urlencode "chosenchars[]=9" --data-urlencode "chosenchars[]=17" \
-            --data-urlencode "chosenchars[]=29" --data-urlencode "chosenchars[]=31" --data-urlencode "chosenchars[]=33" \
-            --data-urlencode "chosenchars[]=37" \
-            --data-urlencode "date_start=2026-09-20 10:00" --data-urlencode "date_end=2026-09-20 11:00" \
-            --data-urlencode "DMUF=3000" --data-urlencode "query_submit=Search"
-          LOC=$(grep -i '^location:' /tmp/h | cut -d' ' -f2- | tr -d '\r'); echo "$LOC"
-          curl -sL --max-time 120 "$LOC" | grep -v '^# [A-Z]' | head -30
-          echo "---- nocturno (spread-F, Es)"
-          curl -sL --max-time 120 "${LOC//2026%2F09%2F20+10%3A00/2026%2F09%2F20+01%3A00}" | tail -8
-          echo "---- estaciones del norte"
-          curl -sL --max-time 60 https://lgdc.uml.edu/common/DIDBFastStationList | grep -oE 'ursiCode=[A-Z]{2}[0-9]{3}">[A-Z0-9]+</a></big></td><td[^>]*><big>[^<]*</big></td><td[^>]*><big>[^<]*</big></td><td[^>]*><big>[^<]*' | sed -E 's/<[^>]*>/ /g; s/"/ /g' | grep -iE 'EB040|DB049|RO041|ROQUETES|DOURBES|EBRO|CHILTON|RL052|JULIUSRUH|LISBON|SAN VITO|ROME|TORTOSA|PRUHONICE|GIBILMANNA' 
-          for st in EB040 DB049 RL052 RO041 SO148; do
-            echo "== $st"
-            curl -sL --max-time 60 "https://lgdc.uml.edu/fastchar/getbest?ursiCode=$st&charName=foF2,MD,hmF2,fmin,foEs&DMUF=3000&fromDate=2026%2F09%2F20+10%3A00%3A00&toDate=2026%2F09%2F20+11%3A00%3A00" | grep -vE '^# (A|P|R|G|T|h)' | tail -7
-          done
-          echo "---- ionogramas: enlaces del portal"
-          for u in https://ulcar.uml.edu/DIDBase/ "https://lgdc.uml.edu/common/DIDBYearListForStation?ursiCode=EA036"; do
-            curl -sL --max-time 60 "$u" | grep -oiE '(href|src)="[^"]*"' | sort -u | head -25
-          done
+          sudo apt-get update -q
+          sudo apt-get install -y -q gfortran automake autoconf
+          git clone https://github.com/jawatson/voacapl.git /tmp/voacapl
+          cd /tmp/voacapl
+          git checkout c12a98b348c39f36f2659b8b3aa97b86284c8a1d
+          autoreconf -fi
+          ./configure -q
+          make
+          sudo make install
+          makeitshfbc
+          voacapl ~/itshfbc > /dev/null && echo "voacapl OK"
+      - name: Generar informe de prueba (sin RBN)
+        run: |
+          python -m propagacion --sin-rbn --salida /tmp/informe 2>&1 | grep -E 'WARNING|ERROR|informe'
+          echo "Secciones sin datos: $(grep -c '_Sin datos esta semana._' /tmp/informe/informe.md || true)"
+          sed -n '/^### La ionosfera medida/,/^## 3/p;/^### NVIS/,/^> \*\*¿Por qué/p' /tmp/informe/informe.md
+          echo "### Informe de prueba" >> "$GITHUB_STEP_SUMMARY"
+          cat /tmp/informe/informe.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: informe-prueba
+          path: /tmp/informe
