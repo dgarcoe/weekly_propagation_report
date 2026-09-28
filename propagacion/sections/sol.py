@@ -8,13 +8,14 @@ from pathlib import Path
 
 from .. import charts, solar
 from ..http import FuenteNoDisponible
-from ..periodo import Periodo, fecha_corta
+from ..periodo import MESES, Periodo, fecha_corta
 from ..sources import drao, noaa
 
 log = logging.getLogger(__name__)
 
 FUENTES = {
-    "noaa": "NOAA SWPC — daily solar/geomagnetic indices, GOES X-ray flares, 27-day outlook "
+    "noaa": "NOAA SWPC — índices solares y geomagnéticos diarios, flujo de rayos X y "
+            "fulguraciones de GOES, previsión a 3 y 27 días y previsión del ciclo solar "
             "(https://www.swpc.noaa.gov/)",
     "drao": "NRC Canada / DRAO Penticton — histórico diario del flujo F10.7 "
             "(https://www.spaceweather.gc.ca/)",
@@ -27,6 +28,14 @@ def _resumen_sfi(valores: list[float]) -> dict:
         "max": max(valores),
         "min": min(valores),
     }
+
+
+def comparar_prevision(valor: float, minimo: float, maximo: float) -> str:
+    if valor < minimo:
+        return "por debajo"
+    if valor > maximo:
+        return "por encima"
+    return "dentro"
 
 
 def construir(p: Periodo, outdir: Path) -> dict:
@@ -114,9 +123,11 @@ def construir(p: Periodo, outdir: Path) -> dict:
 
     # --- Fulguraciones ----------------------------------------------------------------
     fl: dict = {"lista": [], "m": 0, "x": 0}
+    fulg_semana: list = []
     try:
         lista = [f for f in noaa.descargar_fulguraciones()
                  if f.inicio.date() in semana and f.clase[:1] in "MX"]
+        fulg_semana = lista
         lista.sort(key=lambda f: solar.flare_class_value(f.clase), reverse=True)
         fl["lista"] = [{"clase": f.clase, "cuando": f"{fecha_corta(f.inicio.date())} "
                         f"{(f.maximo or f.inicio):%H:%M} UTC"} for f in lista]
@@ -130,9 +141,20 @@ def construir(p: Periodo, outdir: Path) -> dict:
         fl["x"] = sum(d.flares_x for d in dsd if d.fecha in semana)
     res["fulguraciones"] = fl
 
-    # --- Outlook 27 días: próxima semana -----------------------------------------
+    # --- Outlook 27 días: próxima semana y gráfica completa ----------------------
     try:
-        outlook = [d for d in noaa.descargar_27do() if p.sig_inicio <= d.fecha <= p.sig_fin]
+        todo27 = [d for d in noaa.descargar_27do() if d.fecha >= p.sig_inicio]
+        outlook = [d for d in todo27 if d.fecha <= p.sig_fin]
+        if len(todo27) >= 7:
+            res["prevision27"] = {
+                "grafica": charts.prevision_solar(
+                    [(d.fecha, d.sfi, d.kp_max) for d in todo27], (p.sig_inicio, p.sig_fin),
+                    outdir / "prevision_27dias.png",
+                    "NOAA SWPC · 27-day outlook (basado en la rotación solar de ~27 días)").name,
+                "sfi_min": min(d.sfi for d in todo27), "sfi_max": max(d.sfi for d in todo27),
+                "hasta": fecha_corta(todo27[-1].fecha),
+                "dias_kp4": [fecha_corta(d.fecha) for d in todo27 if d.kp_max >= 4],
+            }
         if outlook:
             res["outlook"] = {
                 "sfi_min": min(d.sfi for d in outlook),
@@ -146,6 +168,18 @@ def construir(p: Periodo, outdir: Path) -> dict:
     except FuenteNoDisponible as e:
         log.warning("NOAA 27DO: %s", e)
 
+    # --- Previsión a 3 días: Kp y probabilidad de apagones de radio -------------------
+    try:
+        p3 = noaa.descargar_3dias(p.publicacion)
+        res["prevision3"] = [{
+            "dia": fecha_corta(d),
+            "kp_max": max(p3.kp.get(d, [0])),
+            "semaforo": solar.semaforo_kp(max(p3.kp.get(d, [0]))).emoji,
+            "r12": p3.r1_r2.get(d), "r3": p3.r3.get(d),
+        } for d in p3.dias]
+    except FuenteNoDisponible as e:
+        log.warning("NOAA 3 días: %s", e)
+
     # --- Gráfica del SFI (12 meses) --------------------------------------------------
     desde = p.fin - timedelta(days=365)
     serie = [(d, v) for d, v in historico if desde <= d <= p.fin]
@@ -157,9 +191,48 @@ def construir(p: Periodo, outdir: Path) -> dict:
             fuente_graf = "NOAA SWPC (media mensual)"
         except FuenteNoDisponible as e:
             log.warning("NOAA ciclo: %s", e)
+    # Previsión del ciclo: los próximos 6 meses (media mensual y rango de NOAA)
+    prevision_ciclo = []
+    try:
+        todas = noaa.descargar_prediccion_f107()
+        prevision_ciclo = [x for x in todas if p.fin < x[0] <= p.fin + timedelta(days=190)]
+        if prevision_ciclo:
+            ult = prevision_ciclo[-1]
+            res["ciclo"] = {"mes": f"{MESES[ult[0].month - 1]} de {ult[0].year}", "sfi": ult[1],
+                            "min": ult[2], "max": ult[3]}
+            # ¿Va el Sol por encima o por debajo de lo previsto? Media de la última rotación
+            # (27 días) frente al rango previsto para el mes en curso.
+            mes = next((x for x in todas if (x[0].year, x[0].month) == (p.fin.year, p.fin.month)), None)
+            ultimos = [v for d, v in historico if p.fin - timedelta(days=26) <= d <= p.fin]
+            if mes and len(ultimos) >= 20:
+                media = statistics.fmean(ultimos)
+                res["ciclo"].update(actual=media, prev_mes=mes[1], comparacion=comparar_prevision(
+                    media, mes[2], mes[3]))
+    except FuenteNoDisponible as e:
+        log.warning("NOAA predicción ciclo: %s", e)
     if len(serie) >= 6:
         res["grafica_sfi"] = charts.sfi_tendencia(serie, outdir / "sfi_12meses.png",
-                                                  (p.inicio, p.fin), fuente_graf).name
+                                                  (p.inicio, p.fin), fuente_graf,
+                                                  prevision=prevision_ciclo or None).name
+
+    # --- La semana del Sol: rayos X, SFI diario y Kp ------------------------------------
+    try:
+        xrays = [(t, f) for t, f in noaa.descargar_xrays() if t.date() in semana]
+    except FuenteNoDisponible as e:
+        log.warning("GOES rayos X: %s", e)
+        xrays = []
+    sfi_dia = sorted({d.fecha: d.sfi for d in dsd if d.fecha in semana and d.sfi}.items())
+    if not sfi_dia and historico:
+        sfi_dia = [(d, v) for d, v in historico if d in semana]
+    if xrays or sfi_dia or res["kp3h"]:
+        marcas = [(f.maximo or f.inicio, f.clase, solar.flare_class_value(f.clase))
+                  for f in fulg_semana]
+        res["grafica_semana"] = charts.semana_solar(
+            xrays, sfi_dia, res["kp3h"], marcas,
+            (datetime.combine(p.inicio, datetime.min.time()),
+             datetime.combine(p.fin + timedelta(days=1), datetime.min.time())),
+            outdir / "semana_solar.png",
+            "Rayos X: GOES (NOAA), canal 0,1–0,8 nm · SFI y Kp: NOAA SWPC").name
 
     res["ok"] = "sfi" in res or "geomag" in res
     if res["ok"] or "outlook" in res:

@@ -49,6 +49,24 @@ def fake_fluxtable() -> str:
     return "\n".join(lines) + "\n"
 
 
+def fake_xrays() -> str:
+    """GOES 1 min, dos canales; fondo clase B con la M1.4 del 22/9 y la X1.1 del 23/9."""
+    import json
+
+    filas = []
+    t = datetime(2026, 9, 21, 8)
+    while t < datetime(2026, 9, 28, 8):
+        flux = 3e-7 * (1 + 0.3 * math.sin(t.hour / 3))
+        for pico, clase in ((datetime(2026, 9, 22, 10, 58), 1.4e-5), (datetime(2026, 9, 23, 13, 52), 1.1e-4)):
+            flux += clase * math.exp(-abs((t - pico).total_seconds()) / 900)
+        for energia, f in (("0.05-0.4nm", flux / 10), ("0.1-0.8nm", flux)):
+            filas.append({"time_tag": f"{t:%Y-%m-%dT%H:%M:%S}Z", "satellite": 18, "flux": f,
+                          "energy": energia})
+        t += timedelta(minutes=5)
+    filas.append({"time_tag": "2026-09-24T00:00:00Z", "flux": 0.0, "energy": "0.1-0.8nm"})
+    return json.dumps(filas)
+
+
 def fake_wspr_tsv() -> str:
     rnd = random.Random(40)
     remotos = [("W1AW", "FN31pr"), ("K3LR", "EN91"), ("PY2ZX", "GG66"), ("VK2XX", "QF56"),
@@ -144,6 +162,9 @@ def internet_falsa(monkeypatch, tmp_path):
             config.URL_NOAA_KP: (FIX / "noaa-planetary-k-index.json").read_bytes,
             config.URL_NOAA_FLARES: (FIX / "xray-flares-7-day.json").read_bytes,
             config.URL_NOAA_27DO: (FIX / "27-day-outlook.txt").read_bytes,
+            config.URL_NOAA_3DAY: (FIX / "3-day-forecast.txt").read_bytes,
+            config.URL_NOAA_CYCLE_PRED: (FIX / "predicted-solar-cycle.json").read_bytes,
+            config.URL_NOAA_XRAYS: lambda: fake_xrays().encode(),
             config.URL_DRAO_FLUX: lambda: fake_fluxtable().encode(),
             config.URL_WSPR_LIVE: lambda: fake_wspr_tsv().encode(),
             config.URL_CELESTRAK_AMATEUR: lambda: fake_tle().encode(),

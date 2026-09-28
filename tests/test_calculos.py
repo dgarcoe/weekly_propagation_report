@@ -200,3 +200,11 @@ def test_periodo(hoy, publicacion):
     assert p.publicacion == publicacion
     assert (p.inicio, p.fin) == (publicacion - timedelta(days=7), publicacion - timedelta(days=1))
     assert p.sig_inicio == publicacion and p.etiqueta == "2026-W40"
+
+
+def test_comparar_prevision_ciclo():
+    from propagacion.sections.sol import comparar_prevision
+
+    assert comparar_prevision(108, 120.4, 137.0) == "por debajo"
+    assert comparar_prevision(130, 120.4, 137.0) == "dentro"
+    assert comparar_prevision(150, 120.4, 137.0) == "por encima"

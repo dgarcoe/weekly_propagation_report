@@ -33,21 +33,73 @@ previsión: {{ sig_semana }}
 
 _Semáforo Kp: 🟢 ≤ 3 tranquilo · 🟡 4 inquieto · 🔴 ≥ 5 tormenta._
 
+{% if sol.grafica_semana %}
+
+![La semana del Sol: rayos X, SFI y Kp]({{ sol.grafica_semana }})
+
+_Cómo leerla, de arriba abajo. **Rayos X:** cada pico es una fulguración; si entra en la franja
+rosa (clases M y X), en la cara iluminada de la Tierra la capa D absorbe la HF durante minutos u
+horas (el famoso «apagón de radio»). **SFI:** cuanto más alto, más arriba llega la MUF.
+**Kp:** agitación del campo magnético cada 3 horas; las barras rojas son tormenta._
+{% endif %}
 {% if sol.grafica_sfi %}
-![Flujo solar de los últimos 12 meses]({{ sol.grafica_sfi }})
+
+![Flujo solar de los últimos 12 meses y previsión]({{ sol.grafica_sfi }})
 
 _Estamos en la fase descendente del ciclo 25: el SFI baja poco a poco, con altibajos de ~27 días
-(la rotación del Sol). La línea discontinua marca la tendencia del último año._
+(la rotación del Sol). La línea discontinua naranja marca la tendencia del último año{% if sol.ciclo %}; a la
+derecha, en violeta, la previsión mensual de NOAA con su rango de incertidumbre (zona sombreada){% endif %}._
 {% endif %}
 {% else %}
 {{ sin_datos }}
 {% endif %}
+
+### ¿Qué viene? Previsión de la actividad solar
+
+{% if sol.prevision3 or sol.outlook or sol.prevision27 or sol.ciclo %}
+{% if sol.prevision3 %}
+**Próximos 3 días** (NOAA, la previsión más fiable):
+
+| Día | Kp máx. previsto | | Prob. apagón de radio R1–R2 | Prob. apagón fuerte (R3+) |
+|---|---:|:-:|---:|---:|
+{% for d in sol.prevision3 %}
+| {{ d.dia }} | {{ d.kp_max|es(2) }} | {{ d.semaforo }} | {{ d.r12 if d.r12 is not none else "—" }} % | {{ d.r3 if d.r3 is not none else "—" }} % |
+{% endfor %}
+
+_R1–R2 = fulguración M (apagón menor o moderado en la cara diurna); R3+ = fulguración X._
+{% endif %}
 {% if sol.outlook %}
 {% set o = sol.outlook %}
 
-**Lo que espera NOAA para esta semana:** SFI entre {{ o.sfi_min }} y {{ o.sfi_max }}, Ap máximo
-{{ o.ap_max }} y Kp máximo {{ o.kp_max }} ({{ o.semaforo.emoji }} {{ o.semaforo.texto }}){% if o.dias_kp4 %};
-días con Kp ≥ 4 previstos: {{ o.dias_kp4|join(", ") }}{% endif %}.
+**Esta semana:** SFI entre {{ o.sfi_min }} y {{ o.sfi_max }}, Ap máximo {{ o.ap_max }} y
+Kp máximo {{ o.kp_max }} ({{ o.semaforo.emoji }} {{ o.semaforo.texto }}){% if o.dias_kp4 %}; días con Kp ≥ 4 previstos:
+{{ o.dias_kp4|join(", ") }}{% endif %}.
+{% endif %}
+{% if sol.prevision27 %}
+{% set q = sol.prevision27 %}
+
+![Previsión de NOAA a 27 días]({{ q.grafica }})
+
+**Hasta el {{ q.hasta }}:** SFI entre {{ q.sfi_min }} y {{ q.sfi_max }}{% if q.dias_kp4 %}; posible
+agitación geomagnética (Kp ≥ 4) el {{ q.dias_kp4|join(", ") }}{% else %}; sin días agitados a la vista{% endif %}.
+_Esta previsión se basa en que el Sol gira sobre sí mismo cada ~27 días: las regiones activas y
+los agujeros coronales que vimos hace una rotación suelen «volver a asomarse». Por eso acierta
+bastante con las tendencias, pero no puede anticipar una fulguración concreta._
+{% endif %}
+{% if sol.ciclo %}
+
+**A largo plazo:** NOAA prevé para {{ sol.ciclo.mes }} un SFI medio mensual de
+**{{ sol.ciclo.sfi|es }}** (entre {{ sol.ciclo.min|es }} y {{ sol.ciclo.max|es }}). Es decir, el ciclo 25 sigue
+bajando: poco a poco, 10 m y 12 m abrirán menos días.{% if sol.ciclo.comparacion %} {% if sol.ciclo.comparacion == "dentro" %}De momento el Sol va según lo previsto: la media de los últimos 27 días
+({{ sol.ciclo.actual|es }}) está dentro del rango esperado para este mes.{% else %}**Ojo:** la media de los últimos
+27 días ({{ sol.ciclo.actual|es }}) va **{{ sol.ciclo.comparacion }}** del rango que NOAA preveía para este mes
+(unos {{ sol.ciclo.prev_mes|es }}){% if sol.ciclo.comparacion == "por debajo" %}: el Sol se está apagando más
+deprisa de lo esperado, y las bandas altas lo notarán{% else %}: el Sol está más activo de lo esperado, buena
+noticia para las bandas altas{% endif %}.{% endif %}{% endif %}
+
+{% endif %}
+{% else %}
+{{ sin_datos }}
 {% endif %}
 
 ## 2. Lo que pasó de verdad desde Galicia

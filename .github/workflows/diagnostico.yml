@@ -38,7 +38,7 @@ jobs:
         run: |
           python -m propagacion --sin-rbn --salida /tmp/informe 2>&1 | grep -E 'WARNING|ERROR|informe'
           echo "Secciones sin datos: $(grep -c '_Sin datos esta semana._' /tmp/informe/informe.md || true)"
-          sed -n '/^### La ionosfera medida/,/^## 3/p;/^### NVIS/,/^> \*\*¿Por qué/p' /tmp/informe/informe.md
+          sed -n '/^## 1/,/^## 2/p' /tmp/informe/informe.md
           echo "### Informe de prueba" >> "$GITHUB_STEP_SUMMARY"
           cat /tmp/informe/informe.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
