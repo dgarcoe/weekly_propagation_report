@@ -27,18 +27,57 @@ previsión: lun 28/9 – dom 4/10
 
 _Semáforo Kp: 🟢 ≤ 3 tranquilo · 🟡 4 inquieto · 🔴 ≥ 5 tormenta._
 
-![Flujo solar de los últimos 12 meses](sfi_12meses.png)
+![La semana del Sol: rayos X, SFI y Kp](semana_solar.png)
+
+_Cómo leerla, de arriba abajo. **Rayos X:** cada pico es una fulguración; si entra en la franja
+rosa (clases M y X), en la cara iluminada de la Tierra la capa D absorbe la HF durante minutos u
+horas (el famoso «apagón de radio»). Los huecos de la línea son cortes de datos: cerca de los
+equinoccios el satélite pasa cada día un rato por la sombra de la Tierra. **SFI:** cuanto más alto, más arriba llega la MUF.
+**Kp:** agitación del campo magnético cada 3 horas; las barras rojas son tormenta._
+
+![Flujo solar de los últimos 12 meses y previsión](sfi_12meses.png)
 
 _Estamos en la fase descendente del ciclo 25: el SFI baja poco a poco, con altibajos de ~27 días
-(la rotación del Sol). La línea discontinua marca la tendencia del último año._
+(la rotación del Sol). La línea discontinua naranja marca la tendencia del último año; a la
+derecha, en violeta, la previsión mensual de NOAA con su rango de incertidumbre (zona sombreada)._
 
-**Lo que espera NOAA para esta semana:** SFI entre 90 y 105, Ap máximo
-12 y Kp máximo 4 (🟡 inquieto);
-días con Kp ≥ 4 previstos: dom 4/10.
+### ¿Qué viene? Previsión de la actividad solar
+
+**Próximos 3 días** (NOAA, la previsión más fiable; emitida el lun 28/9 12:30 UTC):
+
+| Día | Kp máx. previsto | | Prob. apagón de radio R1–R2 | Prob. apagón fuerte (R3+) |
+|---|---:|:-:|---:|---:|
+| lun 28/9 | 1,67 | 🟢 | 5 % | 1 % |
+| mar 29/9 | 2,00 | 🟢 | 1 % | 1 % |
+| mié 30/9 | 1,67 | 🟢 | 1 % | 1 % |
+
+_R1–R2 = fulguración M (apagón menor o moderado en la cara diurna); R3+ = fulguración X._
+
+**Esta semana:** SFI entre 90 y 105, Ap máximo 12 y
+Kp máximo 4 (🟡 inquieto); días con Kp ≥ 4 previstos:
+dom 4/10.
+
+![Previsión de NOAA a 27 días](prevision_27dias.png)
+
+**Hasta el sáb 24/10:** SFI entre 88 y 105; posible
+agitación geomagnética (Kp ≥ 4) el dom 4/10, lun 5/10, mar 6/10, mié 21/10, jue 22/10, vie 23/10, sáb 24/10.
+_Esta previsión se basa en que el Sol gira sobre sí mismo cada ~27 días: las regiones activas y
+los agujeros coronales que vimos hace una rotación suelen «volver a asomarse». Por eso acierta
+bastante con las tendencias, pero no puede anticipar una fulguración concreta._
+
+**A largo plazo:** NOAA prevé para marzo de 2027 un SFI medio mensual de
+**122** (entre 109 y 132). Es decir, el ciclo 25 sigue
+bajando: poco a poco, 10 m y 12 m abrirán menos días. **Ojo:** la media de los últimos
+27 días (108) va **por debajo** del rango que NOAA preveía para este mes
+(unos 130): el Sol se está apagando más
+deprisa de lo esperado, y las bandas altas lo notarán.
 
 ## 2. Lo que pasó de verdad desde Galicia
 
-Esta semana se registraron **359 939 spots** con una estación gallega en un extremo (297 600 de WSPR, de 5 estaciones en IN52/IN53, y 62 339 de la Reverse Beacon Network en CW/RTTY).
+Esta semana se registraron **359 939 spots**: 297 600 de WSPR con una
+estación gallega en un extremo (5 estaciones en las cuadrículas IN52/IN53) y
+62 339 de la Reverse Beacon Network en CW/RTTY con una estación del **distrito EA1** (el RBN
+no da locator, así que no podemos separar Galicia de Asturias, Cantabria y Castilla y León).
 Las bandas con más actividad fueron **40m** (114 120), **20m** (103 891), **60m** (41 078), **80m** (31 947), y la hora más movida, las **18 UTC**.
 
 ![Mapa de calor de spots por hora UTC y banda](heatmap_hora_banda.png)
@@ -48,7 +87,7 @@ cómo las bandas altas (10–15 m) se «encienden» con el Sol y las bajas (40�
 que la banda abre para un salto de 3 000 km. Si los spots siguen la línea, teoría y realidad coinciden._
 ### DX de la semana por banda
 
-| Banda | Distancia | Estación gallega | Corresponsal | Locator | Continente | Cuándo | SNR |
+| Banda | Distancia | Estación gallega (WSPR) | Corresponsal | Locator | Continente | Cuándo | SNR |
 |---|---:|---|---|---|---|---|---:|
 | 160m | 5 627 km | EB1A | KK4FL (oyó a Galicia) | FM17tv | Norteamérica | lun 21/9 05:24 UTC | -23 dB |
 | 80m | 19 820 km | EB1A | ZL2005SWL (oyó a Galicia) | RE68mx | Oceanía | jue 24/9 06:24 UTC | -24 dB |
@@ -63,6 +102,8 @@ _Distancias de círculo máximo medidas desde IN52PE (WSPR)._
 
 ### Rutas por continente
 
+Spots de WSPR (Galicia) y RBN (distrito EA1) juntos, por continente del corresponsal:
+
 | Continente | Spots | 160m | 80m | 60m | 40m | 30m | 20m | 17m | 15m | 12m | 10m | 6m | 
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | Europa | **285 223** | 10777 | 28539 | 32847 | 97961 | 26788 | 76342 | 1990 | 9893 | 28 | 49 | 9 | 
@@ -76,7 +117,9 @@ _Distancias de círculo máximo medidas desde IN52PE (WSPR)._
 ![Rutas desde Vigo por rumbo y distancia](rutas_continentes.png)
 
 _Mapa centrado en Vigo: el ángulo es el rumbo al que apuntaría tu antena y la distancia al centro,
-los kilómetros. Entre paréntesis, los spots de cada continente. 1 520 locators distintos._
+los kilómetros. Solo WSPR, porque el RBN no da locator: cada punto es un locator distinto
+(1 520 en total) y la cifra entre paréntesis es cuántos hay de cada continente. Por eso no
+coincide con los spots de la tabla, que suman todos los spots de WSPR y RBN._
 
 ### La ionosfera medida
 
@@ -124,24 +167,36 @@ que la mediana o esporádica E. La línea naranja del mapa de calor muestra lo m
 
 ### DX: fiabilidad prevista (VOACAP)
 
-Bandas con fiabilidad media ≥ 50 % por franja horaria (UTC), la mejor primero. En cursiva, la
-mejor banda cuando ninguna llega al 50 % (apertura posible pero poco fiable):
+**En FT8** (el modo más usado, y el más parecido a los spots WSPR/RBN de la sección 2): bandas con
+fiabilidad media ≥ 50 % por franja horaria (UTC), la mejor primero. En cursiva, la mejor banda
+cuando ninguna llega al 50 % (apertura posible pero poco fiable):
 
 | Destino | km | Rumbo | 00–04 | 04–08 | 08–12 | 12–16 | 16–20 | 20–24 | 
 |---|---:|---:|---|---|---|---|---|---|
-| Norteamérica este (Nueva York) | 5 307 | 291° | 40m, 30m, 80m | 40m, 80m | _30m (47 %)_ | _20m (50 %)_ | 20m, 17m, 15m | 40m, 30m | 
-| Caribe (Santo Domingo) | 6 288 | 265° | 40m | 40m | _20m (34 %)_ | _15m (42 %)_ | 17m, 15m | 30m | 
-| Sudamérica (Buenos Aires) | 9 922 | 219° | 20m | _30m (45 %)_ | _15m (48 %)_ | 12m | 10m, 12m | _20m (46 %)_ | 
-| Japón (Tokio) | 10 780 | 25° | — | — | _17m (39 %)_ | — | _20m (23 %)_ | _30m (31 %)_ | 
-| Oceanía (Sídney) | 18 035 | 69° | — | — | _12m (22 %)_ | — | — | — | 
-| Sudáfrica (Johannesburgo) | 8 489 | 146° | _20m (44 %)_ | — | 12m | 10m, 12m | 12m, 15m, 10m | _17m (47 %)_ | 
+| Norteamérica este (Nueva York) | 5 307 | 291° | 40m, 80m, 30m | 80m, 40m | 40m, 30m | 20m, 17m, 15m | 20m, 17m, 15m | 40m, 30m, 20m | 
+| Caribe (Santo Domingo) | 6 288 | 265° | 40m, 30m, 80m | 40m, 30m, 80m | 30m, 40m, 20m | 17m, 15m, 20m | 17m, 15m, 20m | 30m, 40m, 20m | 
+| Sudamérica (Buenos Aires) | 9 922 | 219° | 20m, 30m, 40m | 30m, 20m, 40m | 17m, 15m | 12m, 15m, 10m | 12m, 10m, 15m | 20m, 17m, 15m | 
+| Japón (Tokio) | 10 780 | 25° | _30m (21 %)_ | — | 17m | _20m (44 %)_ | 30m | 30m | 
+| Oceanía (Sídney) | 18 035 | 69° | — | — | _12m (45 %)_ | _15m (37 %)_ | _20m (46 %)_ | _20m (29 %)_ | 
+| Sudáfrica (Johannesburgo) | 8 489 | 146° | 30m, 20m, 40m | _20m (40 %)_ | 15m, 12m | 12m, 10m, 15m | 15m, 12m, 17m | 20m, 30m, 17m | 
 
 ![Fiabilidad VOACAP por destino, banda y hora](voacap_fiabilidad.png)
 
-_Supuestos: CW a 100 W, dipolos de media onda a media longitud de onda de altura en los dos
-extremos, ruido residencial. SSN usado: **40** (SSN efectivo del SFI previsto (99)). En SSB hacen
-falta ~17 dB más de señal, así que resta fiabilidad; en FT8, suma. VOACAP describe el promedio
-mensual: un día concreto puede ir mucho mejor o peor._
+**En CW** (a oído hace falta unos 14 dB más de señal que en FT8, así que se abren menos bandas):
+
+| Destino | 00–04 | 04–08 | 08–12 | 12–16 | 16–20 | 20–24 | 
+|---|---|---|---|---|---|---|
+| Norteamérica este (Nueva York) | 40m, 30m, 80m | 40m, 80m | _30m (47 %)_ | _20m (50 %)_ | 20m, 17m, 15m | 40m, 30m | 
+| Caribe (Santo Domingo) | 40m | 40m | _20m (34 %)_ | _15m (42 %)_ | 17m, 15m | 30m, 40m | 
+| Sudamérica (Buenos Aires) | 20m | _30m (45 %)_ | _15m (38 %)_ | 12m | 10m, 12m | _20m (46 %)_ | 
+| Japón (Tokio) | — | — | _17m (27 %)_ | — | _20m (23 %)_ | _30m (31 %)_ | 
+| Oceanía (Sídney) | — | — | _12m (20 %)_ | — | — | — | 
+| Sudáfrica (Johannesburgo) | _20m (44 %)_ | — | _12m (40 %)_ | 12m, 10m | 12m, 15m, 10m | _17m (47 %)_ | 
+
+_Supuestos: 100 W, dipolos de media onda a media longitud de onda de altura en los dos extremos,
+ángulo de salida mínimo de 3° y ruido residencial. SSN usado: **40** (SSN efectivo del SFI previsto (99)).
+En SSB hacen falta ~30 dB más que en FT8. VOACAP describe el promedio mensual: un día concreto puede
+ir mucho mejor o peor._
 
 ### NVIS y contactos regionales (80 y 40 m)
 
@@ -266,7 +321,7 @@ Los mejores pases (elevación máxima ≥ 30°) de cada satélite:
 
 ### Fuentes
 
-- NOAA SWPC — daily solar/geomagnetic indices, GOES X-ray flares, 27-day outlook (https://www.swpc.noaa.gov/)
+- NOAA SWPC — índices solares y geomagnéticos diarios, flujo de rayos X y fulguraciones de GOES, previsión a 3 y 27 días y previsión del ciclo solar (https://www.swpc.noaa.gov/)
 - NRC Canada / DRAO Penticton — histórico diario del flujo F10.7 (https://www.spaceweather.gc.ca/)
 - WSPRnet vía wspr.live (https://wspr.live/)
 - Reverse Beacon Network (https://www.reversebeacon.net/)
@@ -278,5 +333,5 @@ Los mejores pases (elevación máxima ≥ 30°) de cada satélite:
 - Cálculos propios: SSN efectivo, distancias de círculo máximo, MUF por ley de la secante y
   orto/ocaso (algoritmo de NOAA).
 
-<sub>Borrador generado automáticamente el 2026-09-28 14:05 UTC por el script del radioclub
+<sub>Borrador generado automáticamente el 2026-09-28 18:47 UTC por el script del radioclub
 EA1RKV. Las secciones sin datos indican que la fuente no respondió esta semana.</sub>
