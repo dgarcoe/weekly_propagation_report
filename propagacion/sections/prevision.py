@@ -70,6 +70,9 @@ def resumen_franjas(rel: dict[int, list[float]], bandas: list[str], umbral: floa
     return out
 
 
+MODO_GRAFICA = "FT8"
+
+
 def construir_voacap(p: Periodo, outdir: Path, ssn: float, ssn_origen: str) -> dict:
     res: dict = {"ok": False}
     lat0, lon0 = geo.locator_to_latlon(config.STATION_LOCATOR)
@@ -77,31 +80,35 @@ def construir_voacap(p: Periodo, outdir: Path, ssn: float, ssn_origen: str) -> d
     freqs = [config.BANDAS[b][2] for b in bandas]
     mid = p.sig_inicio + timedelta(days=3)
     tablas: dict[str, np.ndarray] = {}
-    filas = []
-    for dst in config.DESTINOS:
-        deck = voacap.build_deck((lat0, lon0, config.STATION_NAME.upper()),
-                                 (dst.lat, dst.lon, dst.nombre), mid.year, mid.month, ssn, freqs)
-        rel = voacap.run(deck, len(freqs))
-        m = np.zeros((len(bandas), 24))
-        for h, vals in rel.items():
-            m[:, h] = vals
-        tablas[dst.nombre] = m
-        filas.append({
-            "destino": dst.nombre,
-            "distancia": round(geo.great_circle_km(lat0, lon0, dst.lat, dst.lon)),
-            "rumbo": round(geo.bearing_deg(lat0, lon0, dst.lat, dst.lon)),
-            "franjas": resumen_franjas(rel, bandas),
-        })
+    filas: dict[str, list[dict]] = {modo: [] for modo in voacap.MODOS}
+    for modo, snr in voacap.MODOS.items():
+        params = voacap.Parametros(snr_requerida=snr)
+        for dst in config.DESTINOS:
+            deck = voacap.build_deck((lat0, lon0, config.STATION_NAME.upper()),
+                                     (dst.lat, dst.lon, dst.nombre), mid.year, mid.month, ssn, freqs,
+                                     params)
+            rel = voacap.run(deck, len(freqs))
+            if modo == MODO_GRAFICA:
+                m = np.zeros((len(bandas), 24))
+                for h, vals in rel.items():
+                    m[:, h] = vals
+                tablas[dst.nombre] = m
+            filas[modo].append({
+                "destino": dst.nombre,
+                "distancia": round(geo.great_circle_km(lat0, lon0, dst.lat, dst.lon)),
+                "rumbo": round(geo.bearing_deg(lat0, lon0, dst.lat, dst.lon)),
+                "franjas": resumen_franjas(rel, bandas),
+            })
     res.update(
-        ok=True, ssn=ssn, ssn_origen=ssn_origen, filas=filas,
+        ok=True, ssn=ssn, ssn_origen=ssn_origen, filas=filas[MODO_GRAFICA], filas_cw=filas["CW"],
         franjas=[f"{a:02d}–{b:02d}" for a, b in FRANJAS],
         mes=mid.month,
         parametros=voacap.Parametros(),
         grafica=charts.voacap_multiples(
             tablas, bandas, outdir / "voacap_fiabilidad.png",
-            "Fiabilidad prevista desde Vigo (VOACAP)",
-            f"CW 100 W, dipolos λ/2 a λ/2 de altura, ruido residencial · SSN {ssn:.0f} · "
-            f"mes {mid.month}/{mid.year}").name,
+            f"Fiabilidad prevista desde Vigo en {MODO_GRAFICA} (VOACAP)",
+            f"{MODO_GRAFICA} 100 W, dipolos λ/2 a λ/2 de altura, ángulo mínimo 3°, ruido residencial · "
+            f"SSN {ssn:.0f} · mes {mid.month}/{mid.year}").name,
     )
     return res
 

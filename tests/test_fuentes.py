@@ -213,7 +213,8 @@ def test_prevision_3_dias():
 
 
 def test_prevision_3_dias_cambio_de_anio():
-    txt = "             Dec 31       Jan 01       Jan 02\n00-03UT   1.00  2.00  3.00\n"
+    txt = ("NOAA Kp index breakdown Dec 31-Jan 02 2027\n\n             Dec 31       Jan 01       Jan 02\n"
+           + "".join(f"{h:02d}-{h + 3:02d}UT   1.00  2.00  3.00\n" for h in range(0, 24, 3)))
     p = noaa.parse_3day(txt, date(2026, 12, 31))
     assert p.dias == [date(2026, 12, 31), date(2027, 1, 1), date(2027, 1, 2)]
 
@@ -228,3 +229,43 @@ def test_xrays_canal_largo():
 def test_prediccion_ciclo_f107():
     pred = noaa.parse_predicted_f107(json.loads((FIX / "predicted-solar-cycle.json").read_text()))
     assert pred[1] == (date(2026, 10, 15), 129.7, 119.6, 137.2)
+
+
+def test_prevision_3_dias_lee_la_tabla_de_kp_correcta():
+    """Comprobación independiente: el máximo de cada día debe salir de las columnas de la
+    tabla «NOAA Kp index breakdown» del fichero real, y de ninguna otra."""
+    txt = (FIX / "3-day-forecast.txt").read_text()
+    bloque = txt.split("NOAA Kp index breakdown", 1)[1].split("Rationale", 1)[0]
+    filas = [l.split()[1:] for l in bloque.splitlines() if l.strip()[:2].isdigit() and "UT" in l]
+    assert len(filas) == 8
+    esperado = [max(float(f[i]) for f in filas) for i in range(3)]
+    p = noaa.parse_3day(txt, date(2026, 9, 28))
+    assert [max(p.kp[d]) for d in p.dias] == esperado == [2.0, 2.0, 1.67]
+    assert p.emitida == datetime(2026, 9, 28, 0, 30)
+
+
+def test_prevision_3_dias_ignora_otras_tablas():
+    """Una tabla de Kp observado antes del bloque de previsión no debe colarse."""
+    txt = (FIX / "3-day-forecast.txt").read_text()
+    intruso = ("Observed Kp\n             Sep 21       Sep 22       Sep 23\n"
+               + "".join(f"{h:02d}-{h + 3:02d}UT       9.00         9.00         9.00\n" for h in range(0, 24, 3)))
+    p = noaa.parse_3day(intruso + txt, date(2026, 9, 28))
+    assert p.dias[0] == date(2026, 9, 28) and max(p.kp[date(2026, 9, 28)]) == 2.0
+    assert date(2026, 9, 21) not in p.kp
+
+
+def test_voacap_supuestos_realistas():
+    p = voacap.Parametros()
+    assert p.angulo_min == 3.0                       # con 0,1° elegía saltos rasantes a ~1°
+    assert voacap.MODOS["FT8"] < voacap.MODOS["CW"]
+    deck = voacap.build_deck((42.19, -8.71, "VIGO"), (-34.6, -58.38, "BA"), 2026, 10, 52, FREQS, p)
+    assert next(l for l in deck.splitlines() if l.startswith("SYSTEM")) == "SYSTEM     0.10 145. 3.00  90. 13.0 3.00 0.10"
+
+
+@pytest.mark.skipif(not voacap.disponible(), reason="voacapl no instalado")
+def test_voacap_40m_a_sudamerica_abre_en_ft8():
+    """Regresión: con 207 spots reales Vigo–Sudamérica en 40 m, el modelo no puede dar 0 %."""
+    deck = voacap.build_deck((42.19, -8.71, "VIGO"), (-34.6, -58.38, "BA"), 2026, 10, 52,
+                             [3.6, 7.1, 14.1], voacap.Parametros(snr_requerida=voacap.MODOS["FT8"]))
+    rel = voacap.run(deck, 3)
+    assert max(v[1] for v in rel.values()) >= 0.5

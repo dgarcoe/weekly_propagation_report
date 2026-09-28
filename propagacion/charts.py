@@ -206,6 +206,17 @@ def heatmap_hora_banda(matriz: np.ndarray, bandas: list[str], path: Path, titulo
     return _save(fig, path)
 
 
+def angulo_libre(ocupados: list[float], candidatos=(100, 160, 200, 250, 320, 20)) -> float:
+    """El rumbo candidato más alejado de las etiquetas, para las cifras de los anillos."""
+    if not ocupados:
+        return candidatos[0]
+
+    def sep(a):
+        return min(min(abs(a - o) % 360, 360 - abs(a - o) % 360) for o in ocupados)
+
+    return max(candidatos, key=sep)
+
+
 def rosa_rutas(puntos: list[tuple[float, float]], etiquetas: list[tuple[float, float, str]],
                path: Path, titulo: str, nota: str) -> Path:
     """Proyección azimutal equidistante centrada en Vigo: azimut × distancia.
@@ -229,7 +240,7 @@ def rosa_rutas(puntos: list[tuple[float, float]], etiquetas: list[tuple[float, f
     ax.set_rmax(20000)
     ax.set_rticks([5000, 10000, 15000, 20000])
     ax.set_yticklabels(["5000", "10 000", "15 000", "20 000 km"], color=MUTED, fontsize=8)
-    ax.set_rlabel_position(100)
+    ax.set_rlabel_position(angulo_libre([a for a, _, _ in etiquetas]))
     ax.set_xticks(np.radians(range(0, 360, 45)), ["N", "NE", "E", "SE", "S", "SO", "O", "NO"])
     ax.grid(color=GRID)
     ax.spines["polar"].set_color(AXIS)
@@ -403,16 +414,37 @@ def _kp_barras(ak, kp3h: list[tuple], ancho_h: float = 3.0, desfase_h: float = 1
     ak.grid(axis="y")
 
 
+FLUJO_MINIMO_RX = 1e-8       # por debajo de la clase A: no es el Sol, es un corte de datos
+
+
+def con_huecos(serie: list[tuple], max_hueco_min: int = 5, minimo: float = FLUJO_MINIMO_RX):
+    """(tiempos, valores) listos para ``plot``, con NaN donde faltan datos.
+
+    Descarta valores por debajo de ``minimo`` y mete un NaN entre dos muestras separadas
+    más de ``max_hueco_min`` minutos, para que la línea se corte en vez de unir los extremos.
+    """
+    buenos = [(t, v) for t, v in serie if v is not None and v >= minimo]
+    tiempos, valores = [], []
+    for i, (t, v) in enumerate(buenos):
+        if i and (t - buenos[i - 1][0]).total_seconds() > max_hueco_min * 60:
+            tiempos.append(buenos[i - 1][0] + (t - buenos[i - 1][0]) / 2)
+            valores.append(np.nan)
+        tiempos.append(t)
+        valores.append(v)
+    return np.array(tiempos, dtype="datetime64[m]"), np.array(valores, dtype=float)
+
+
 def semana_solar(xrays: list[tuple], sfi: list[tuple], kp3h: list[tuple],
                  fulguraciones: list[tuple], rango: tuple, path: Path, nota: str) -> Path:
     """Tres paneles con el mismo eje de días: rayos X (GOES), SFI diario y Kp."""
     _style()
     fig, (ax, asf, ak) = plt.subplots(3, 1, figsize=(8, 7.2), sharex=True,
                                       gridspec_kw={"height_ratios": [2.2, 1.2, 1], "hspace": 0.18})
-    # Rayos X, escala logarítmica con las clases de fulguración
+    # Rayos X, escala logarítmica con las clases de fulguración. Los cortes de datos
+    # (eclipses del satélite en torno a los equinoccios) se dejan como huecos.
     if xrays:
-        t = np.array([d for d, _ in xrays], dtype="datetime64[m]")
-        ax.plot(t, [f for _, f in xrays], color=SERIES_1, lw=1)
+        t, f = con_huecos(xrays)
+        ax.plot(t, f, color=SERIES_1, lw=1)
     ax.set_yscale("log")
     ax.set_ylim(1e-8, 1e-3)
     for clase, nivel in CLASES_RX:

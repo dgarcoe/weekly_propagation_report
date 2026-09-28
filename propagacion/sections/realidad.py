@@ -143,6 +143,26 @@ def tabla_continentes(contactos: list[Contacto], bandas: list[str]) -> list[dict
     return filas
 
 
+def etiquetas_rosa(vistos: dict[str, tuple[float, float, str | None]]
+                   ) -> list[tuple[float, float, str]]:
+    """Una etiqueta por continente con el número de locators distintos (lo mismo que los puntos).
+
+    Se coloca en el azimut y la distancia medianos de sus puntos. La de Europa, que en esta
+    proyección queda pegada al centro, se aparta un poco hacia fuera para no tapar a Vigo.
+    """
+    por_cont: dict[str, list[tuple[float, float]]] = defaultdict(list)
+    for az, d, cont in vistos.values():
+        if cont:
+            por_cont[cont].append((az, d))
+    out = []
+    for cont, pts in sorted(por_cont.items(), key=lambda kv: -len(kv[1])):
+        az = float(np.median([a for a, _ in pts]))
+        d = float(np.median([d for _, d in pts]))
+        d = max(d * 1.12, 3500) if cont == "EU" else min(d * 1.12, 19000)
+        out.append((az, d, f"{cont} ({len(pts)})"))
+    return out
+
+
 def construir(p: Periodo, outdir: Path, usar_rbn: bool = True,
               muf3000: dict[int, float] | None = None) -> dict:
     """``muf3000``: MUF(3000)F2 medida por hora UTC, para dibujarla sobre el mapa de calor."""
@@ -179,7 +199,7 @@ def construir(p: Periodo, outdir: Path, usar_rbn: bool = True,
     m = matriz_hora_banda(contactos, bandas)
     res["heatmap"] = charts.heatmap_hora_banda(
         m, bandas, outdir / "heatmap_hora_banda.png",
-        "Spots desde/hacia Galicia por hora y banda",
+        "Spots por hora y banda: Galicia (WSPR) y distrito EA1 (RBN)",
         f"WSPR + RBN · {p.inicio:%d/%m}–{p.fin:%d/%m/%Y} · cuadrículas "
         f"{', '.join(config.GALICIA_SQUARES)} (WSPR) y distrito EA1 (RBN)"
         + (" · línea: MUF(3000)F2 medida (ionosondas, estimada en Vigo)" if muf3000 else ""),
@@ -199,27 +219,16 @@ def construir(p: Periodo, outdir: Path, usar_rbn: bool = True,
     res["continentes"] = tabla_continentes(contactos, bandas_cont)
 
     # Rosa de rutas: un punto por locator remoto único (WSPR).
-    vistos: dict[str, tuple[float, float]] = {}
+    vistos: dict[str, tuple[float, float, str | None]] = {}
     for c in contactos:
         if c.remoto_loc and c.distancia_km is not None and c.distancia_km > 50:
-            vistos.setdefault(c.remoto_loc, (c.azimut, c.distancia_km))
+            vistos.setdefault(c.remoto_loc, (c.azimut, c.distancia_km, c.continente))
     if vistos:
-        etiquetas = []
-        por_cont: dict[str, list[tuple[float, float]]] = defaultdict(list)
-        for c in contactos:
-            if c.remoto_loc in vistos and c.continente:
-                por_cont[c.continente].append((c.azimut, c.distancia_km))
-        for cont, pts in por_cont.items():
-            if cont == "EU":
-                continue           # Europa queda en el centro; etiquetarla tapa los puntos
-            # Etiqueta en el azimut/distancia medianos del continente.
-            az = float(np.median([a for a, _ in pts]))
-            d = float(np.median([d for _, d in pts]))
-            etiquetas.append((az, min(d * 1.12, 19000), f"{cont} ({len(pts)})"))
+        res["rosa_etiquetas"] = etiquetas = etiquetas_rosa(vistos)
         res["rosa"] = charts.rosa_rutas(
-            list(vistos.values()), etiquetas, outdir / "rutas_continentes.png",
+            [(a, d) for a, d, _ in vistos.values()], etiquetas, outdir / "rutas_continentes.png",
             "¿Hacia dónde hubo propagación?",
-            f"Cada punto es un locator remoto (WSPR) · centro: {config.STATION_LOCATOR} · "
-            "proyección azimutal equidistante").name
+            f"Cada punto es un locator remoto (solo WSPR) · entre paréntesis, locators por continente · "
+            f"centro: {config.STATION_LOCATOR}").name
         res["locators_unicos"] = len(vistos)
     return res

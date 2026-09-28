@@ -34,11 +34,11 @@ jobs:
           sudo make install
           makeitshfbc
           voacapl ~/itshfbc > /dev/null && echo "voacapl OK"
-      - name: Generar informe de prueba (sin RBN)
+      - name: Generar informe de prueba
         run: |
-          python -m propagacion --sin-rbn --salida /tmp/informe 2>&1 | grep -E 'WARNING|ERROR|informe'
+          python -m propagacion --salida /tmp/informe 2>&1 | grep -E 'WARNING|ERROR|informe'
           echo "Secciones sin datos: $(grep -c '_Sin datos esta semana._' /tmp/informe/informe.md || true)"
-          sed -n '/^## 1/,/^## 2/p' /tmp/informe/informe.md
+          sed -n '/^Esta semana se registraron/,/^Las bandas/p;/^### Rutas/,/^Spots de/p;/^\*\*Próximos 3 días/,/^| mié/p;/^### DX: fiabilidad/,/^_Supuestos/p' /tmp/informe/informe.md
           echo "### Informe de prueba" >> "$GITHUB_STEP_SUMMARY"
           cat /tmp/informe/informe.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4

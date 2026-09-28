@@ -30,11 +30,19 @@ class VoacapNoDisponible(RuntimeError):
 class Parametros:
     potencia_kw: float = 0.1          # 100 W
     ruido_dbw: int = 145              # −145 dBW a 3 MHz: zona residencial
-    angulo_min: float = 0.1           # grados
+    # 3°: por debajo, los dipolos apenas radian; con 0,1° VOACAP elegía en 40/80 m saltos
+    # rasantes (~1°) con −16 dB de ganancia en cada extremo y la fiabilidad se hundía.
+    angulo_min: float = 3.0           # grados
     rel_requerida: int = 90
-    snr_requerida: float = 27.0       # dB·Hz ≈ CW legible (~0 dB en 500 Hz)
+    snr_requerida: float = 13.0       # dB·Hz: FT8 (decodifica a −21 dB en 2,5 kHz)
     antena_tx: str = "ea1rkv/dipolo.voa"   # dipolo λ/2 a λ/2 de altura
     antena_rx: str = "ea1rkv/dipolo.voa"
+
+
+# SNR requerida (dB en 1 Hz) según el modo. La de WSPR/FT8 se acerca a los spots reales que
+# comparamos (WSPR decodifica a −28 dB en 2,5 kHz ≈ 6 dB·Hz; los skimmers del RBN oyen CW
+# muy débil con buenas antenas); CW «legible» a oído necesita bastante más.
+MODOS = {"FT8": 13.0, "CW": 27.0}
 
 
 def _lat(v: float) -> str:

@@ -39,7 +39,8 @@ _Semáforo Kp: 🟢 ≤ 3 tranquilo · 🟡 4 inquieto · 🔴 ≥ 5 tormenta._
 
 _Cómo leerla, de arriba abajo. **Rayos X:** cada pico es una fulguración; si entra en la franja
 rosa (clases M y X), en la cara iluminada de la Tierra la capa D absorbe la HF durante minutos u
-horas (el famoso «apagón de radio»). **SFI:** cuanto más alto, más arriba llega la MUF.
+horas (el famoso «apagón de radio»). Los huecos de la línea son cortes de datos: cerca de los
+equinoccios el satélite pasa cada día un rato por la sombra de la Tierra. **SFI:** cuanto más alto, más arriba llega la MUF.
 **Kp:** agitación del campo magnético cada 3 horas; las barras rojas son tormenta._
 {% endif %}
 {% if sol.grafica_sfi %}
@@ -58,7 +59,7 @@ derecha, en violeta, la previsión mensual de NOAA con su rango de incertidumbre
 
 {% if sol.prevision3 or sol.outlook or sol.prevision27 or sol.ciclo %}
 {% if sol.prevision3 %}
-**Próximos 3 días** (NOAA, la previsión más fiable):
+**Próximos 3 días** (NOAA, la previsión más fiable{% if sol.prevision3_emitida %}; emitida el {{ sol.prevision3_emitida }}{% endif %}):
 
 | Día | Kp máx. previsto | | Prob. apagón de radio R1–R2 | Prob. apagón fuerte (R3+) |
 |---|---:|:-:|---:|---:|
@@ -106,7 +107,10 @@ noticia para las bandas altas{% endif %}.{% endif %}{% endif %}
 
 {% if realidad.ok %}
 {% set r = realidad %}
-Esta semana se registraron **{{ r.total|es }} spots** con una estación gallega en un extremo{% if r.wspr_spots is defined %} ({{ r.wspr_spots|es }} de WSPR, de {{ r.wspr_estaciones }} estaciones en {{ cfg.GALICIA_SQUARES|join("/") }}{% if r.rbn_spots is defined %}, y {{ r.rbn_spots|es }} de la Reverse Beacon Network en CW/RTTY{% endif %}){% endif %}.
+Esta semana se registraron **{{ r.total|es }} spots**{% if r.wspr_spots is defined %}: {{ r.wspr_spots|es }} de WSPR con una
+estación gallega en un extremo ({{ r.wspr_estaciones }} estaciones en las cuadrículas {{ cfg.GALICIA_SQUARES|join("/") }}){% endif %}{% if r.rbn_spots is defined %}{{ " y" if r.wspr_spots is defined else ":" }}
+{{ r.rbn_spots|es }} de la Reverse Beacon Network en CW/RTTY con una estación del **distrito EA1** (el RBN
+no da locator, así que no podemos separar Galicia de Asturias, Cantabria y Castilla y León){% endif %}.
 Las bandas con más actividad fueron {% for b in r.bandas_top %}**{{ b.banda }}** ({{ b.spots|es }}){{ ", " if not loop.last }}{% endfor %}, y la hora más movida, las **{{ "%02d"|format(r.hora_pico) }} UTC**.
 
 ![Mapa de calor de spots por hora UTC y banda]({{ r.heatmap }})
@@ -119,7 +123,7 @@ que la banda abre para un salto de 3 000 km. Si los spots siguen la línea, teor
 ### DX de la semana por banda
 
 {% if r.dx %}
-| Banda | Distancia | Estación gallega | Corresponsal | Locator | Continente | Cuándo | SNR |
+| Banda | Distancia | Estación gallega (WSPR) | Corresponsal | Locator | Continente | Cuándo | SNR |
 |---|---:|---|---|---|---|---|---:|
 {% for d in r.dx %}
 | {{ d.banda }} | {{ d.distancia|es }} km | {{ d.local }} | {{ d.remoto }} ({{ d.sentido }}) | {{ d.remoto_loc }} | {{ d.continente }} | {{ d.cuando }} | {{ d.snr }} dB |
@@ -133,6 +137,8 @@ _Sin spots con locator esta semana._
 ### Rutas por continente
 
 {% if r.continentes %}
+Spots de WSPR (Galicia) y RBN (distrito EA1) juntos, por continente del corresponsal:
+
 | Continente | Spots | {% for b in r.continentes_bandas %}{{ b }} | {% endfor %}
 
 |---|---:|{% for b in r.continentes_bandas %}---:|{% endfor %}
@@ -147,7 +153,9 @@ _Sin spots con locator esta semana._
 ![Rutas desde Vigo por rumbo y distancia]({{ r.rosa }})
 
 _Mapa centrado en Vigo: el ángulo es el rumbo al que apuntaría tu antena y la distancia al centro,
-los kilómetros. Entre paréntesis, los spots de cada continente. {{ r.locators_unicos|es }} locators distintos._
+los kilómetros. Solo WSPR, porque el RBN no da locator: cada punto es un locator distinto
+({{ r.locators_unicos|es }} en total) y la cifra entre paréntesis es cuántos hay de cada continente. Por eso no
+coincide con los spots de la tabla, que suman todos los spots de WSPR y RBN._
 {% endif %}
 {% else %}
 {{ sin_datos }}
@@ -236,8 +244,9 @@ que la mediana o esporádica E.{% endif %} La línea naranja del mapa de calor m
 
 {% set v = prevision.voacap %}
 {% if v.ok %}
-Bandas con fiabilidad media ≥ 50 % por franja horaria (UTC), la mejor primero. En cursiva, la
-mejor banda cuando ninguna llega al 50 % (apertura posible pero poco fiable):
+**En FT8** (el modo más usado, y el más parecido a los spots WSPR/RBN de la sección 2): bandas con
+fiabilidad media ≥ 50 % por franja horaria (UTC), la mejor primero. En cursiva, la mejor banda
+cuando ninguna llega al 50 % (apertura posible pero poco fiable):
 
 | Destino | km | Rumbo | {% for f in v.franjas %}{{ f }} | {% endfor %}
 
@@ -250,10 +259,23 @@ mejor banda cuando ninguna llega al 50 % (apertura posible pero poco fiable):
 
 ![Fiabilidad VOACAP por destino, banda y hora]({{ v.grafica }})
 
-_Supuestos: CW a 100 W, dipolos de media onda a media longitud de onda de altura en los dos
-extremos, ruido residencial. SSN usado: **{{ v.ssn|es }}** ({{ v.ssn_origen }}). En SSB hacen
-falta ~17 dB más de señal, así que resta fiabilidad; en FT8, suma. VOACAP describe el promedio
-mensual: un día concreto puede ir mucho mejor o peor._
+{% if v.filas_cw %}
+**En CW** (a oído hace falta unos 14 dB más de señal que en FT8, así que se abren menos bandas):
+
+| Destino | {% for f in v.franjas %}{{ f }} | {% endfor %}
+
+|---|{% for f in v.franjas %}---|{% endfor %}
+
+{% for f in v.filas_cw %}
+| {{ f.destino }} | {% for x in f.franjas %}{{ x }} | {% endfor %}
+
+{% endfor %}
+{% endif %}
+
+_Supuestos: 100 W, dipolos de media onda a media longitud de onda de altura en los dos extremos,
+ángulo de salida mínimo de 3° y ruido residencial. SSN usado: **{{ v.ssn|es }}** ({{ v.ssn_origen }}).
+En SSB hacen falta ~30 dB más que en FT8. VOACAP describe el promedio mensual: un día concreto puede
+ir mucho mejor o peor._
 {% else %}
 {{ sin_datos }}
 {% endif %}
