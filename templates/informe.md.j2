@@ -90,7 +90,13 @@ bastante con las tendencias, pero no puede anticipar una fulguración concreta._
 
 **A largo plazo:** NOAA prevé para {{ sol.ciclo.mes }} un SFI medio mensual de
 **{{ sol.ciclo.sfi|es }}** (entre {{ sol.ciclo.min|es }} y {{ sol.ciclo.max|es }}). Es decir, el ciclo 25 sigue
-bajando: poco a poco, 10 m y 12 m abrirán menos días.
+bajando: poco a poco, 10 m y 12 m abrirán menos días.{% if sol.ciclo.comparacion %} {% if sol.ciclo.comparacion == "dentro" %}De momento el Sol va según lo previsto: la media de los últimos 27 días
+({{ sol.ciclo.actual|es }}) está dentro del rango esperado para este mes.{% else %}**Ojo:** la media de los últimos
+27 días ({{ sol.ciclo.actual|es }}) va **{{ sol.ciclo.comparacion }}** del rango que NOAA preveía para este mes
+(unos {{ sol.ciclo.prev_mes|es }}){% if sol.ciclo.comparacion == "por debajo" %}: el Sol se está apagando más
+deprisa de lo esperado, y las bandas altas lo notarán{% else %}: el Sol está más activo de lo esperado, buena
+noticia para las bandas altas{% endif %}.{% endif %}{% endif %}
+
 {% endif %}
 {% else %}
 {{ sin_datos }}

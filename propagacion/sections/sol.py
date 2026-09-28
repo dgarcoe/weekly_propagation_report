@@ -30,6 +30,14 @@ def _resumen_sfi(valores: list[float]) -> dict:
     }
 
 
+def comparar_prevision(valor: float, minimo: float, maximo: float) -> str:
+    if valor < minimo:
+        return "por debajo"
+    if valor > maximo:
+        return "por encima"
+    return "dentro"
+
+
 def construir(p: Periodo, outdir: Path) -> dict:
     res: dict = {"ok": False, "fuentes": [], "avisos": []}
     semana = set(p.dias())
@@ -186,12 +194,20 @@ def construir(p: Periodo, outdir: Path) -> dict:
     # Previsión del ciclo: los próximos 6 meses (media mensual y rango de NOAA)
     prevision_ciclo = []
     try:
-        prevision_ciclo = [x for x in noaa.descargar_prediccion_f107()
-                           if p.fin < x[0] <= p.fin + timedelta(days=190)]
+        todas = noaa.descargar_prediccion_f107()
+        prevision_ciclo = [x for x in todas if p.fin < x[0] <= p.fin + timedelta(days=190)]
         if prevision_ciclo:
             ult = prevision_ciclo[-1]
             res["ciclo"] = {"mes": f"{MESES[ult[0].month - 1]} de {ult[0].year}", "sfi": ult[1],
                             "min": ult[2], "max": ult[3]}
+            # ¿Va el Sol por encima o por debajo de lo previsto? Media de la última rotación
+            # (27 días) frente al rango previsto para el mes en curso.
+            mes = next((x for x in todas if (x[0].year, x[0].month) == (p.fin.year, p.fin.month)), None)
+            ultimos = [v for d, v in historico if p.fin - timedelta(days=26) <= d <= p.fin]
+            if mes and len(ultimos) >= 20:
+                media = statistics.fmean(ultimos)
+                res["ciclo"].update(actual=media, prev_mes=mes[1], comparacion=comparar_prevision(
+                    media, mes[2], mes[3]))
     except FuenteNoDisponible as e:
         log.warning("NOAA predicción ciclo: %s", e)
     if len(serie) >= 6:

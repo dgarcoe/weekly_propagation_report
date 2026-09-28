@@ -28,6 +28,7 @@ def test_informe_completo(internet_falsa, tmp_path):
     assert "| lun 28/9 | 2,00 | 🟢 | 10 % | 1 % |" in md             # previsión a 3 días
     assert "**Hasta el lun 5/10:**" in md                           # 27 días
     assert "NOAA prevé para marzo de 2027 un SFI medio mensual de" in md
+    assert "va según lo previsto" in md or "**Ojo:**" in md             # media 27 d vs rango del mes
 
     # Sección 2
     assert "Spots desde/hacia Galicia" not in md        # el título va en la imagen, no en el texto
