@@ -10,7 +10,7 @@ pasó de verdad** (spots WSPR y RBN desde Galicia).
 
 | Sección | Contenido | Fuentes |
 |---|---|---|
-| 1. El Sol | SFI medio/máx./mín. y tendencia, SSN efectivo (≈ 1,14·SFI − 73,2), Ap medio, Kp máx. con semáforo 🟢🟡🔴, fulguraciones M/X, outlook de NOAA para la semana y gráfica de SFI de 12 meses | NOAA SWPC, DRAO Penticton |
+| 1. El Sol | SFI medio/máx./mín. y tendencia, SSN efectivo (≈ 1,14·SFI − 73,2), Ap medio, Kp máx. con semáforo 🟢🟡🔴, fulguraciones M/X; gráfica «La semana del Sol» (rayos X de GOES, SFI diario y Kp); previsión: tabla a 3 días (Kp y probabilidad de apagones de radio), gráfica a 27 días y previsión del ciclo en la gráfica de SFI de 12 meses | NOAA SWPC, GOES, DRAO Penticton |
 | 2. Lo que pasó de verdad | Mapa de calor hora UTC × banda, DX de la semana por banda (distancia desde IN52PE), rutas por continente y mapa azimutal | wspr.live (IN52/IN53), RBN (distrito EA1) |
 | 3. Previsión | Fiabilidad VOACAP hacia NA este, Caribe, Sudamérica, Japón, Oceanía y Sudáfrica; NVIS/regional en 80 y 40 m a partir de foF2 de El Arenosillo; línea gris | voacapl, GIRO DIDBase, cálculo propio |
 | 4. Agenda | Concursos del fin de semana, lluvias de meteoros, pases de satélites sobre Vigo | WA7BNM (RSS), IMO, CelesTrak/AMSAT + skyfield |

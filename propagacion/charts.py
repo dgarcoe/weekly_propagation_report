@@ -6,7 +6,7 @@ serie de acento azul y rampas secuenciales de un único tono.
 from __future__ import annotations
 
 import math
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import matplotlib
@@ -34,6 +34,7 @@ GRID = "#e1e0d9"
 AXIS = "#c3c2b7"
 SERIES_1 = "#2a78d6"       # azul
 SERIES_2 = "#eb6834"       # naranja
+SERIES_7 = "#4a3aa7"       # violeta (previsiones)
 SEQ_BLUE = ["#f0efec", "#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#256abf", "#184f95", "#0d366b"]
 # Fiabilidad VOACAP: rampa secuencial azul con cortes fijos (0-10-30-50-70-90-100 %).
 REL_EDGES = [0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0001]
@@ -83,12 +84,16 @@ def _nota(fig, texto: str):
 # --- Sección 1: SFI ---------------------------------------------------------------
 
 def sfi_tendencia(serie: list[tuple[date, float]], path: Path, semana: tuple[date, date],
-                  fuente: str) -> Path:
-    """Flujo diario, media móvil de 27 días (una rotación solar) y tendencia lineal."""
+                  fuente: str, prevision: list[tuple[date, float, float, float]] | None = None) -> Path:
+    """Flujo diario, media móvil de 27 días (una rotación solar) y tendencia lineal.
+
+    ``prevision``: (mes, SFI previsto, mínimo, máximo) de NOAA para los próximos meses,
+    dibujada a la derecha como línea discontinua con su rango sombreado.
+    """
     _style()
     fechas = np.array([d for d, _ in serie], dtype="datetime64[D]")
     vals = np.array([v for _, v in serie], dtype=float)
-    fig, ax = plt.subplots(figsize=(8, 4.2))
+    fig, ax = plt.subplots(figsize=(8.4 if prevision else 8, 4.2))
     ax.plot(fechas, vals, color="#9ec5f4", lw=1.2, label="SFI diario")
     if len(vals) >= 27:
         kernel = np.ones(27) / 27
@@ -102,6 +107,16 @@ def sfi_tendencia(serie: list[tuple[date, float]], path: Path, semana: tuple[dat
                 label=f"Tendencia ({a * 30:+.1f} SFI/mes)")
     ax.axvspan(np.datetime64(semana[0]), np.datetime64(semana[1]) + 1, color=GRID, alpha=0.9,
                lw=0, label="Semana analizada")
+    minimos = [np.nanmin(vals)]
+    if prevision:
+        fp = np.array([d for d, *_ in prevision], dtype="datetime64[D]")
+        ax.fill_between(fp, [lo for *_, lo, _ in prevision], [hi for *_, hi in prevision],
+                        color="#dcd8f3", lw=0)
+        ax.plot(fp, [v for _, v, _, _ in prevision], color=SERIES_7, lw=2, marker="o", ms=4,
+                label="Previsión NOAA (y su rango)")
+        ax.axvline(fechas[-1], color=AXIS, lw=1)
+        ax.text(fechas[-1], ax.get_ylim()[1], " previsión →", color=INK_2, fontsize=9, va="top")
+        minimos.append(min(lo for *_, lo, _ in prevision))
     ax.set_title("Flujo solar 10,7 cm (SFI)", pad=34)
     ax.set_ylabel("SFI (sfu)")
     ax.grid(axis="y")
@@ -110,8 +125,9 @@ def sfi_tendencia(serie: list[tuple[date, float]], path: Path, semana: tuple[dat
     # Leyenda entre el título y el gráfico para no tapar datos
     ax.legend(loc="lower left", bbox_to_anchor=(0, 1.0), ncol=4, fontsize=9, handlelength=1.6,
               borderaxespad=0.3, columnspacing=1.2)
-    ax.set_ylim(bottom=max(0, math.floor(np.nanmin(vals) / 20) * 20 - 20))
-    _nota(fig, f"Fuente: {fuente}")
+    ax.set_ylim(bottom=max(0, math.floor(min(minimos) / 20) * 20 - 20))
+    _nota(fig, f"Fuente: {fuente}" + (" · previsión: NOAA SWPC (ciclo solar, media mensual)"
+                                       if prevision else ""))
     return _save(fig, path)
 
 
@@ -366,3 +382,98 @@ DIAS_CORTOS = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"]
 def _dia_es(x, _pos=None) -> str:
     d = mdates.num2date(x)
     return f"{DIAS_CORTOS[d.weekday()]} {d.day}"
+
+
+# --- Sección 1: la semana del Sol y la previsión -------------------------------------
+
+CLASES_RX = (("A", 1e-8), ("B", 1e-7), ("C", 1e-6), ("M", 1e-5), ("X", 1e-4))
+
+
+def _kp_barras(ak, kp3h: list[tuple], ancho_h: float = 3.0, desfase_h: float = 1.5):
+    if kp3h:
+        tk = np.array([d for d, _ in kp3h], dtype="datetime64[m]") + np.timedelta64(int(desfase_h * 60), "m")
+        kv = np.array([k for _, k in kp3h], dtype=float)
+        col = [STATUS_CRIT if k >= 5 else STATUS_WARN if k >= 4 else STATUS_GOOD for k in kv]
+        ak.bar(tk, kv, width=np.timedelta64(int(ancho_h * 60 * 0.95), "m"), color=col,
+               edgecolor=SURFACE, lw=0.5)
+    ak.axhline(5, color=STATUS_CRIT, lw=1, ls=(0, (4, 3)))
+    ak.set_ylim(0, 9)
+    ak.set_yticks([0, 3, 5, 9])
+    ak.set_ylabel("Kp")
+    ak.grid(axis="y")
+
+
+def semana_solar(xrays: list[tuple], sfi: list[tuple], kp3h: list[tuple],
+                 fulguraciones: list[tuple], rango: tuple, path: Path, nota: str) -> Path:
+    """Tres paneles con el mismo eje de días: rayos X (GOES), SFI diario y Kp."""
+    _style()
+    fig, (ax, asf, ak) = plt.subplots(3, 1, figsize=(8, 7.2), sharex=True,
+                                      gridspec_kw={"height_ratios": [2.2, 1.2, 1], "hspace": 0.18})
+    # Rayos X, escala logarítmica con las clases de fulguración
+    if xrays:
+        t = np.array([d for d, _ in xrays], dtype="datetime64[m]")
+        ax.plot(t, [f for _, f in xrays], color=SERIES_1, lw=1)
+    ax.set_yscale("log")
+    ax.set_ylim(1e-8, 1e-3)
+    for clase, nivel in CLASES_RX:
+        ax.axhline(nivel, color=GRID, lw=0.8)
+        ax.text(1.005, math.sqrt(nivel * nivel * 10), clase, transform=ax.get_yaxis_transform(),
+                color=INK_2, fontsize=10, fontweight="bold", va="center")
+    ax.axhspan(1e-5, 1e-3, color="#fde2e1", lw=0, zorder=0)
+    ax.text(np.datetime64(rango[0]), 8e-4, " M y X: apagones de radio en HF (lado diurno)",
+            color=INK_2, fontsize=8.5, va="top")
+    for cuando, clase, flujo in fulguraciones:
+        ax.annotate(clase, (np.datetime64(cuando, "m"), flujo), xytext=(0, 5),
+                    textcoords="offset points", ha="center", va="bottom", fontsize=9,
+                    fontweight="bold", color=INK,
+                    bbox=dict(boxstyle="round,pad=0.15", fc=SURFACE, ec="none", alpha=0.8))
+    ax.set_ylabel("Rayos X (W/m²)")
+    ax.set_title("La semana del Sol")
+    ax.set_yticks([1e-8, 1e-6, 1e-4])
+    ax.grid(False)
+
+    # SFI diario
+    if sfi:
+        fd = np.array([d for d, _ in sfi], dtype="datetime64[D]") + np.timedelta64(12, "h")
+        vs = [v for _, v in sfi]
+        asf.bar(fd, vs, width=np.timedelta64(19, "h"), color="#9ec5f4", edgecolor=SURFACE)
+        for x, v in zip(fd, vs):
+            asf.text(x, v, f"{v:.0f}", ha="center", va="bottom", fontsize=9, color=INK_2)
+        asf.set_ylim(min(vs) * 0.85, max(vs) * 1.12)
+    asf.set_ylabel("SFI")
+    asf.grid(axis="y")
+
+    _kp_barras(ak, kp3h)
+    ak.set_xlim(np.datetime64(rango[0]), np.datetime64(rango[1]))
+    ak.xaxis.set_major_locator(mdates.DayLocator())
+    ak.xaxis.set_major_formatter(FuncFormatter(_dia_es))
+    _nota(fig, nota)
+    return _save(fig, path)
+
+
+def prevision_solar(dias: list[tuple], semana: tuple, path: Path, nota: str) -> Path:
+    """Previsión a 27 días de NOAA: SFI arriba, Kp máximo diario abajo (dos paneles)."""
+    _style()
+    fig, (asf, ak) = plt.subplots(2, 1, figsize=(8, 4.8), sharex=True,
+                                  gridspec_kw={"height_ratios": [1.6, 1], "hspace": 0.12})
+    fd = np.array([d for d, _, _ in dias], dtype="datetime64[D]") + np.timedelta64(12, "h")
+    sfi = [s for _, s, _ in dias]
+    for a in (asf, ak):
+        a.axvspan(np.datetime64(semana[0]), np.datetime64(semana[1]) + 1, color=GRID, alpha=0.55,
+                  lw=0, zorder=0)
+    asf.plot(fd, sfi, color=SERIES_1, lw=2.2, marker="o", ms=4)
+    asf.text(np.datetime64(semana[0]) + np.timedelta64(3, "h"), max(sfi), " esta semana",
+             color=INK_2, fontsize=9, va="top")
+    asf.set_ylabel("SFI previsto")
+    asf.set_ylim(min(sfi) - 8, max(sfi) + 8)
+    asf.grid(axis="y")
+    asf.set_title("Lo que espera NOAA: próximos 27 días")
+    kp = [(datetime(d.year, d.month, d.day), k) for d, _, k in dias]
+    _kp_barras(ak, kp, ancho_h=24, desfase_h=12)
+    ak.set_ylabel("Kp máx.")
+    ak.xaxis.set_major_locator(mdates.DayLocator(interval=3))
+    ak.xaxis.set_major_formatter(FuncFormatter(_dia_es))
+    ak.set_xlim(fd[0] - np.timedelta64(12, "h"), fd[-1] + np.timedelta64(12, "h"))
+    _nota(fig, nota)
+    return _save(fig, path)
+

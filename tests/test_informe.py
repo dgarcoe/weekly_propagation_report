@@ -22,6 +22,12 @@ def test_informe_completo(internet_falsa, tmp_path):
     assert "**X1.1**" in md
     assert (out / "sfi_12meses.png").stat().st_size > 10_000
     assert "Kp máximo 5" in md                           # outlook: 2/10 con Kp 5
+    # La semana del Sol y la previsión
+    for png in ("semana_solar.png", "prevision_27dias.png"):
+        assert (out / png).stat().st_size > 10_000
+    assert "| lun 28/9 | 2,00 | 🟢 | 10 % | 1 % |" in md             # previsión a 3 días
+    assert "**Hasta el lun 5/10:**" in md                           # 27 días
+    assert "NOAA prevé para marzo de 2027 un SFI medio mensual de" in md
 
     # Sección 2
     assert "Spots desde/hacia Galicia" not in md        # el título va en la imagen, no en el texto

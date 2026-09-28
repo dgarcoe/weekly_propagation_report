@@ -202,3 +202,29 @@ def test_voacap_ejecucion_real():
                              2026, 10, 110, FREQS)
     rel = voacap.run(deck, len(FREQS))
     assert len(rel) == 24
+
+
+def test_prevision_3_dias():
+    p = noaa.parse_3day((FIX / "3-day-forecast.txt").read_text(), date(2026, 9, 28))
+    assert p.dias == [date(2026, 9, 28), date(2026, 9, 29), date(2026, 9, 30)]
+    assert p.kp[date(2026, 9, 28)] == [1.67, 2.0, 1.67, 1.67, 1.67, 0.67, 0.67, 1.67]
+    assert p.r1_r2[date(2026, 9, 28)] == 10 and p.r3[date(2026, 9, 29)] == 1
+    assert p.s1[date(2026, 9, 30)] == 1
+
+
+def test_prevision_3_dias_cambio_de_anio():
+    txt = "             Dec 31       Jan 01       Jan 02\n00-03UT   1.00  2.00  3.00\n"
+    p = noaa.parse_3day(txt, date(2026, 12, 31))
+    assert p.dias == [date(2026, 12, 31), date(2027, 1, 1), date(2027, 1, 2)]
+
+
+def test_xrays_canal_largo():
+    data = [{"time_tag": "2026-09-22T10:58:00Z", "flux": 1.4e-5, "energy": "0.1-0.8nm"},
+            {"time_tag": "2026-09-22T10:58:00Z", "flux": 2e-6, "energy": "0.05-0.4nm"},
+            {"time_tag": "2026-09-22T10:59:00Z", "flux": 0.0, "energy": "0.1-0.8nm"}]
+    assert noaa.parse_xrays_json(data) == [(datetime(2026, 9, 22, 10, 58), 1.4e-5)]
+
+
+def test_prediccion_ciclo_f107():
+    pred = noaa.parse_predicted_f107(json.loads((FIX / "predicted-solar-cycle.json").read_text()))
+    assert pred[1] == (date(2026, 10, 15), 129.7, 119.6, 137.2)

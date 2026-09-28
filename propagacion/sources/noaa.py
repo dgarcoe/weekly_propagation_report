@@ -208,6 +208,98 @@ def parse_predicted_json(data) -> dict[tuple[int, int], float]:
     return out
 
 
+def parse_predicted_f107(data) -> list[tuple[date, float, float, float]]:
+    """[(mes, F10.7 previsto, mínimo, máximo)] del JSON predicted-solar-cycle.
+
+    El rango es el de los campos ``low_f10.7``/``high_f10.7`` de NOAA (hay también
+    bandas más estrechas y más anchas: ``*25`` y ``*75``).
+    """
+    out = []
+    for r in data or []:
+        tag = r.get("time-tag") or r.get("time_tag")
+        try:
+            y, mo = (int(x) for x in str(tag)[:7].split("-"))
+            out.append((date(y, mo, 15), float(r["predicted_f10.7"]),
+                        float(r.get("low_f10.7", r["predicted_f10.7"])),
+                        float(r.get("high_f10.7", r["predicted_f10.7"]))))
+        except (KeyError, TypeError, ValueError):
+            continue
+    return sorted(out)
+
+
+# --- xrays-7-day.json (GOES) ------------------------------------------------------
+
+def parse_xrays_json(data, canal: str = "0.1-0.8nm") -> list[tuple[datetime, float]]:
+    """Flujo de rayos X (W/m²) del canal largo, el que define la clase A/B/C/M/X.
+
+    Los valores 0 (contaminación por electrones o huecos) se descartan.
+    """
+    out = []
+    for r in data or []:
+        if r.get("energy") != canal:
+            continue
+        try:
+            flux = float(r.get("flux") or 0)
+            if flux <= 0:
+                continue
+            out.append((datetime.fromisoformat(str(r["time_tag"]).replace("Z", "")), flux))
+        except (KeyError, TypeError, ValueError):
+            continue
+    return sorted(out)
+
+
+# --- 3-day-forecast.txt ---------------------------------------------------------------
+
+@dataclass
+class Prevision3Dias:
+    dias: list[date]
+    kp: dict[date, list[float]]          # 8 valores trihorarios por día
+    r1_r2: dict[date, int]               # % de apagones de radio menores/moderados
+    r3: dict[date, int]                  # % de apagones fuertes (R3 o más)
+    s1: dict[date, int]                  # % de tormenta de radiación S1 o más
+
+
+_FECHAS_3D = re.compile(r"([A-Z][a-z]{2})\s+(\d{1,2})")
+
+
+def parse_3day(text: str, ref: date) -> Prevision3Dias:
+    lines = text.splitlines()
+    dias: list[date] = []
+    kp: dict[date, list[float]] = {}
+    probs: dict[str, dict[date, int]] = {"R1-R2": {}, "R3": {}, "S1": {}}
+
+    def fechas(line: str) -> list[date]:
+        out = []
+        for mes, dia in _FECHAS_3D.findall(line):
+            d = datetime.strptime(f"{ref.year} {mes} {dia}", "%Y %b %d").date()
+            if (d - ref).days < -180:          # cambio de año
+                d = d.replace(year=ref.year + 1)
+            out.append(d)
+        return out
+
+    cabecera: list[date] = []
+    for line in lines:
+        st = line.strip()
+        if re.fullmatch(r"([A-Z][a-z]{2}\s+\d{1,2}\s*){3}", st):
+            cabecera = fechas(st)
+            if not dias:
+                dias = cabecera
+            continue
+        m = re.match(r"^(\d{2})-(\d{2})UT\s+(.*)$", st)
+        if m and cabecera:
+            vals = re.findall(r"\d+(?:\.\d+)?", m.group(3))
+            for d, v in zip(cabecera, vals):
+                kp.setdefault(d, []).append(float(v))
+            continue
+        for clave, patron in (("R1-R2", r"^R1-R2"), ("R3", r"^R3 or greater"), ("S1", r"^S1 or greater")):
+            if re.match(patron, st) and cabecera:
+                for d, v in zip(cabecera, re.findall(r"(\d+)%", st)):
+                    probs[clave][d] = int(v)
+    if not dias or not kp:
+        raise FuenteNoDisponible("previsión de 3 días ilegible")
+    return Prevision3Dias(dias, kp, probs["R1-R2"], probs["R3"], probs["S1"])
+
+
 # --- descargas ----------------------------------------------------------------
 
 def descargar_dsd() -> list[DiaSolar]:
@@ -245,3 +337,18 @@ def descargar_ciclo():
 
 def descargar_prediccion_ciclo():
     return parse_predicted_json(fetch_json(config.URL_NOAA_CYCLE_PRED, max_age_h=48))
+
+
+def descargar_prediccion_f107():
+    return parse_predicted_f107(fetch_json(config.URL_NOAA_CYCLE_PRED, max_age_h=48))
+
+
+def descargar_xrays() -> list[tuple[datetime, float]]:
+    serie = parse_xrays_json(fetch_json(config.URL_NOAA_XRAYS, max_age_h=3, timeout=120))
+    if not serie:
+        raise FuenteNoDisponible("GOES rayos X sin datos")
+    return serie
+
+
+def descargar_3dias(ref: date) -> Prevision3Dias:
+    return parse_3day(fetch_text(config.URL_NOAA_3DAY, max_age_h=6), ref)
