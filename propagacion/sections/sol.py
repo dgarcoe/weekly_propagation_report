@@ -171,6 +171,10 @@ def construir(p: Periodo, outdir: Path) -> dict:
     # --- Previsión a 3 días: Kp y probabilidad de apagones de radio -------------------
     try:
         p3 = noaa.descargar_3dias(p.publicacion)
+        # Solo días que aún no han pasado respecto a la fecha del informe
+        p3.dias = [d for d in p3.dias if d >= p.publicacion - timedelta(days=1)]
+        res["prevision3_emitida"] = (f"{fecha_corta(p3.emitida.date())} {p3.emitida:%H:%M} UTC"
+                                     if p3.emitida else None)
         res["prevision3"] = [{
             "dia": fecha_corta(d),
             "kp_max": max(p3.kp.get(d, [0])),

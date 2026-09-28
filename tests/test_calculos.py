@@ -208,3 +208,33 @@ def test_comparar_prevision_ciclo():
     assert comparar_prevision(108, 120.4, 137.0) == "por debajo"
     assert comparar_prevision(130, 120.4, 137.0) == "dentro"
     assert comparar_prevision(150, 120.4, 137.0) == "por encima"
+
+
+def test_rayos_x_con_huecos():
+    import numpy as np
+    from datetime import datetime as dt
+
+    t0 = dt(2026, 9, 22, 10)
+    serie = [(t0 + timedelta(minutes=i), 3e-7) for i in range(5)]
+    serie += [(t0 + timedelta(minutes=5), 5e-10)]                       # eclipse: no es el Sol
+    serie += [(t0 + timedelta(minutes=40 + i), 4e-7) for i in range(3)]  # vuelve tras 35 min
+    t, v = charts.con_huecos(serie)
+    assert np.isnan(v).sum() == 1                    # un único corte, en el hueco
+    assert np.nanmin(v) >= charts.FLUJO_MINIMO_RX    # el valor de eclipse no se dibuja
+    assert len(v) == 5 + 1 + 3
+
+
+def test_angulo_libre_para_las_cifras_de_los_anillos():
+    # Etiquetas en NA (291°), SA (219°), OC (69°)… las cifras no deben caer encima
+    a = charts.angulo_libre([291, 219, 69, 146, 25])
+    assert min(abs(a - o) % 360 for o in (291, 219, 69, 146, 25)) >= 30
+
+
+def test_etiquetas_rosa_cuentan_locators_e_incluyen_europa():
+    vistos = {"FN31": (291, 5300, "NA"), "FN20": (290, 5400, "NA"), "EN91": (300, 6000, "NA"),
+              "JO62": (55, 2000, "EU"), "IO91": (20, 1100, "EU")}
+    etiquetas = realidad.etiquetas_rosa(vistos)
+    textos = [t for *_, t in etiquetas]
+    assert textos == ["NA (3)", "EU (2)"]
+    eu = next(e for e in etiquetas if e[2].startswith("EU"))
+    assert eu[1] >= 3500                              # separada del centro para no tapar Vigo

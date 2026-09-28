@@ -59,6 +59,8 @@ def fake_xrays() -> str:
         flux = 3e-7 * (1 + 0.3 * math.sin(t.hour / 3))
         for pico, clase in ((datetime(2026, 9, 22, 10, 58), 1.4e-5), (datetime(2026, 9, 23, 13, 52), 1.1e-4)):
             flux += clase * math.exp(-abs((t - pico).total_seconds()) / 900)
+        if 3 <= t.hour < 4:                       # eclipse diario del satélite (equinoccio)
+            flux = 1e-9
         for energia, f in (("0.05-0.4nm", flux / 10), ("0.1-0.8nm", flux)):
             filas.append({"time_tag": f"{t:%Y-%m-%dT%H:%M:%S}Z", "satellite": 18, "flux": f,
                           "energy": energia})

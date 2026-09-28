@@ -252,6 +252,7 @@ def parse_xrays_json(data, canal: str = "0.1-0.8nm") -> list[tuple[datetime, flo
 
 @dataclass
 class Prevision3Dias:
+    emitida: datetime | None
     dias: list[date]
     kp: dict[date, list[float]]          # 8 valores trihorarios por día
     r1_r2: dict[date, int]               # % de apagones de radio menores/moderados
@@ -262,42 +263,73 @@ class Prevision3Dias:
 _FECHAS_3D = re.compile(r"([A-Z][a-z]{2})\s+(\d{1,2})")
 
 
-def parse_3day(text: str, ref: date) -> Prevision3Dias:
-    lines = text.splitlines()
-    dias: list[date] = []
-    kp: dict[date, list[float]] = {}
-    probs: dict[str, dict[date, int]] = {"R1-R2": {}, "R3": {}, "S1": {}}
+def _fechas(line: str, ref: date) -> list[date]:
+    out = []
+    for mes, dia in _FECHAS_3D.findall(line):
+        d = datetime.strptime(f"{ref.year} {mes} {dia}", "%Y %b %d").date()
+        if (d - ref).days < -180:              # cambio de año
+            d = d.replace(year=ref.year + 1)
+        out.append(d)
+    return out
 
-    def fechas(line: str) -> list[date]:
-        out = []
-        for mes, dia in _FECHAS_3D.findall(line):
-            d = datetime.strptime(f"{ref.year} {mes} {dia}", "%Y %b %d").date()
-            if (d - ref).days < -180:          # cambio de año
-                d = d.replace(year=ref.year + 1)
-            out.append(d)
-        return out
 
-    cabecera: list[date] = []
+def _bloque(lines: list[str], titulo: str) -> list[str]:
+    """Líneas desde la que empieza por ``titulo`` hasta la siguiente sección (A./B./C.)."""
+    out, dentro = [], False
     for line in lines:
         st = line.strip()
+        if st.startswith(titulo):
+            dentro = True
+        elif dentro and re.match(r"^[A-Z]\. ", st):
+            break
+        if dentro:
+            out.append(st)
+    return out
+
+
+def parse_3day(text: str, ref: date) -> Prevision3Dias:
+    """Lee el 3-day-forecast de NOAA bloque a bloque.
+
+    La tabla de Kp se toma SOLO de «NOAA Kp index breakdown <fechas>» y se exige que
+    sus columnas sean esos mismos días; así nunca se confunde con otra tabla.
+    """
+    lines = text.splitlines()
+    emitida = None
+    m = re.search(r"^:Issued:\s*(\d{4} \w{3} \d{1,2} \d{4}) UTC", text, re.M)
+    if m:
+        emitida = datetime.strptime(m.group(1), "%Y %b %d %H%M")
+
+    kp_bloque = _bloque(lines, "NOAA Kp index breakdown")
+    if not kp_bloque:
+        raise FuenteNoDisponible("previsión de 3 días: falta la tabla de Kp")
+    dias_titulo = _fechas(kp_bloque[0].replace("NOAA Kp index breakdown", ""), ref)
+    kp: dict[date, list[float]] = {}
+    dias: list[date] = []
+    for st in kp_bloque[1:]:
         if re.fullmatch(r"([A-Z][a-z]{2}\s+\d{1,2}\s*){3}", st):
-            cabecera = fechas(st)
-            if not dias:
-                dias = cabecera
+            dias = _fechas(st, ref)
             continue
-        m = re.match(r"^(\d{2})-(\d{2})UT\s+(.*)$", st)
-        if m and cabecera:
-            vals = re.findall(r"\d+(?:\.\d+)?", m.group(3))
-            for d, v in zip(cabecera, vals):
+        mm = re.match(r"^(\d{2})-(\d{2})UT\s+(.*)$", st)
+        if mm and dias:
+            for d, v in zip(dias, re.findall(r"\d+(?:\.\d+)?", mm.group(3))):
                 kp.setdefault(d, []).append(float(v))
-            continue
-        for clave, patron in (("R1-R2", r"^R1-R2"), ("R3", r"^R3 or greater"), ("S1", r"^S1 or greater")):
-            if re.match(patron, st) and cabecera:
-                for d, v in zip(cabecera, re.findall(r"(\d+)%", st)):
-                    probs[clave][d] = int(v)
-    if not dias or not kp:
-        raise FuenteNoDisponible("previsión de 3 días ilegible")
-    return Prevision3Dias(dias, kp, probs["R1-R2"], probs["R3"], probs["S1"])
+    if not dias or any(len(v) != 8 for v in kp.values()):
+        raise FuenteNoDisponible("previsión de 3 días: tabla de Kp incompleta")
+    if dias_titulo and (dias[0], dias[-1]) != (dias_titulo[0], dias_titulo[-1]):
+        raise FuenteNoDisponible("previsión de 3 días: las columnas no son los días del título")
+
+    probs: dict[str, dict[date, int]] = {"R1-R2": {}, "R3": {}, "S1": {}}
+    for titulo, claves in (("Radio Blackout Forecast", (("R1-R2", r"^R1-R2"), ("R3", r"^R3 or greater"))),
+                           ("Solar Radiation Storm Forecast", (("S1", r"^S1 or greater"),))):
+        cab: list[date] = []
+        for st in _bloque(lines, titulo):
+            if re.fullmatch(r"([A-Z][a-z]{2}\s+\d{1,2}\s*){3}", st):
+                cab = _fechas(st, ref)
+            for clave, patron in claves:
+                if cab and re.match(patron, st):
+                    for d, v in zip(cab, re.findall(r"(\d+)%", st)):
+                        probs[clave][d] = int(v)
+    return Prevision3Dias(emitida, dias, kp, probs["R1-R2"], probs["R3"], probs["S1"])
 
 
 # --- descargas ----------------------------------------------------------------

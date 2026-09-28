@@ -27,6 +27,12 @@ def test_informe_completo(internet_falsa, tmp_path):
         assert (out / png).stat().st_size > 10_000
     assert "| lun 28/9 | 2,00 | 🟢 | 10 % | 1 % |" in md             # previsión a 3 días
     assert "**Hasta el lun 5/10:**" in md                           # 27 días
+    assert "emitida el lun 28/9 00:30 UTC" in md
+    # RBN es del distrito EA1, no solo de Galicia; la rosa cuenta locators (solo WSPR)
+    assert "del **distrito EA1**" in md and "Solo WSPR, porque el RBN no da locator" in md
+    # VOACAP: FT8 como previsión principal y tabla adicional en CW
+    if voacap.disponible():
+        assert "**En FT8**" in md and "**En CW**" in md
     assert "NOAA prevé para marzo de 2027 un SFI medio mensual de" in md
     assert "va según lo previsto" in md or "**Ojo:**" in md             # media 27 d vs rango del mes
 
