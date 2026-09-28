@@ -1,47 +1,26 @@
 name: Diagnóstico de fuentes
 
-# Genera un informe completo en el runner sin abrir PR, para comprobar que todas
-# las fuentes responden. Se lanza a mano (Run workflow) o al tocar el código en
-# una rama claude/**.
 on:
   workflow_dispatch:
   push:
     branches: ["claude/**"]
-    paths: [".github/workflows/diagnostico.yml", "propagacion/**"]
+    paths: [".github/workflows/diagnostico.yml"]
 
 jobs:
   probar:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-      - run: pip install -r requirements.txt
-      - name: Compilar e instalar voacapl
-        continue-on-error: true
+      - name: Productos de previsión solar de NOAA
         run: |
-          sudo apt-get update -q
-          sudo apt-get install -y -q gfortran automake autoconf
-          git clone https://github.com/jawatson/voacapl.git /tmp/voacapl
-          cd /tmp/voacapl
-          git checkout c12a98b348c39f36f2659b8b3aa97b86284c8a1d
-          autoreconf -fi
-          ./configure -q
-          make
-          sudo make install
-          makeitshfbc
-          voacapl ~/itshfbc > /dev/null && echo "voacapl OK"
-      - name: Generar informe de prueba (sin RBN)
-        run: |
-          python -m propagacion --sin-rbn --salida /tmp/informe 2>&1 | grep -E 'WARNING|ERROR|informe'
-          echo "Secciones sin datos: $(grep -c '_Sin datos esta semana._' /tmp/informe/informe.md || true)"
-          sed -n '/^### La ionosfera medida/,/^## 3/p;/^### NVIS/,/^> \*\*¿Por qué/p' /tmp/informe/informe.md
-          echo "### Informe de prueba" >> "$GITHUB_STEP_SUMMARY"
-          cat /tmp/informe/informe.md >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: informe-prueba
-          path: /tmp/informe
+          S=https://services.swpc.noaa.gov
+          p() { echo "=== $1"; curl -sL --max-time 60 "$S/$1" -o /tmp/r -w 'HTTP %{http_code} %{size_download}\n'; head -c ${2:-900} /tmp/r; echo; }
+          p json/goes/primary/xrays-7-day.json 700
+          python3 -c "import json;d=json.load(open('/tmp/r'));print(len(d));print(sorted({x.get('energy') for x in d}));print(d[0]['time_tag'],d[-1]['time_tag'])"
+          p text/3-day-forecast.txt 4000
+          p text/3-day-geomag-forecast.txt 1500
+          p json/solar-cycle/predicted-solar-cycle.json 600
+          python3 -c "import json;d=json.load(open('/tmp/r'));print(d[0].keys());[print(x) for x in d if x['time-tag']>='2026-08'][:8]" | head -12
+          p text/27-day-outlook.txt 1500
+          p products/solar-wind/plasma-7-day.json 300
+          p json/solar-radio-flux.json 400
+          p products/summary/10cm-flux.json 300
