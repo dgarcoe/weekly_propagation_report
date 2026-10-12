@@ -13,7 +13,7 @@ previsión: lun 12/10 – dom 18/10
   tendencia frente a la semana anterior: **al alza (+26 %)** (media previa 93).
 - **SSN efectivo aproximado:** ≈ **60** (SSN ≈ 1,14·SFI − 73,2) · número de manchas observado (media): 81.
 - **Campo geomagnético:** 🔴 **tormenta geomagnética (G3)** · Kp máximo **7,00** · Ap medio **17** (máx. 46) · 4 día(s) con Kp ≥ 4.
-- **Fulguraciones:** 0 de clase X y 7 de clase M — la mayor, **M6.7** (jue 8/10 15:48 UTC). Una fulguración fuerte en el lado diurno puede provocar un *apagón de radio* (absorción en la capa D) durante minutos u horas.
+- **Fulguraciones:** 0 de clase X y 6 de clase M — la mayor, **M6.7** (jue 8/10 15:48 UTC). Una fulguración fuerte en el lado diurno puede provocar un *apagón de radio* (absorción en la capa D) durante minutos u horas.
 
 | Día | SFI | Manchas | Ap | Kp máx. | |
 |---|---:|---:|---:|---:|:-:|
@@ -84,6 +84,11 @@ Las bandas con más actividad fueron **40m** (99 446), **20m** (76 505), **1
 
 _Cómo leerlo: cada casilla es una hora UTC en una banda; cuanto más oscura, más spots. Fíjate en
 cómo las bandas altas (10–15 m) se «encienden» con el Sol y las bajas (40–80 m) de noche._
+
+_La línea naranja es la **MUF(3000) modelada con VOACAP** para la semana pasada (con el SFI real
+de esos días): esta semana las ionosondas no respondieron, así que es lo que dice el modelo, no una
+medida. Por debajo de ella, la teoría dice que la banda abre para un salto de 3 000 km._
+
 ### DX de la semana por banda
 
 | Banda | Distancia | Estación gallega (WSPR) | Corresponsal | Locator | Continente | Cuándo | SNR |
@@ -121,7 +126,7 @@ coincide con los spots de la tabla, que suman todos los spots de WSPR y RBN._
 
 ### La ionosfera medida
 
-_Sin datos esta semana._
+_Sin datos esta semana: el servidor de GIRO (lgdc.uml.edu) no respondió a ninguna de las ionosondas, así que esta semana no hay medidas de foF2, MUF ni esporádica E._
 
 ## 3. Previsión para la semana (lun 12/10 – dom 18/10)
 
@@ -160,7 +165,7 @@ ir mucho mejor o peor._
 
 ### NVIS y contactos regionales (80 y 40 m)
 
-_Sin datos esta semana._
+_Sin datos esta semana: el servidor de GIRO (lgdc.uml.edu) no respondió a ninguna de las ionosondas, así que esta semana no hay medidas de foF2, MUF ni esporádica E._
 
 ### Línea gris
 
@@ -255,5 +260,5 @@ Los mejores pases (elevación máxima ≥ 30°) de cada satélite:
 - Cálculos propios: SSN efectivo, distancias de círculo máximo, MUF por ley de la secante y
   orto/ocaso (algoritmo de NOAA).
 
-<sub>Borrador generado automáticamente el 2026-10-12 15:42 UTC por el script del radioclub
+<sub>Borrador generado automáticamente el 2026-10-12 21:17 UTC por el script del radioclub
 EA1RKV. Las secciones sin datos indican que la fuente no respondió esta semana.</sub>
