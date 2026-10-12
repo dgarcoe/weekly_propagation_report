@@ -71,7 +71,7 @@ def test_informe_completo(internet_falsa, tmp_path):
     assert report.comentario_pendiente(md) is not None
     assert "wspr.live" in md and "NOAA SWPC" in md
     # Con todas las fuentes respondiendo, solo VOACAP puede faltar (si voacapl no está instalado).
-    assert md.count("_Sin datos esta semana._") == (0 if voacap.disponible() else 1)
+    assert md.count("_Sin datos esta semana") == (0 if voacap.disponible() else 1)
 
     html = (out / "informe.html").read_text()
     assert "<table>" in html and 'src="heatmap_hora_banda.png"' in html
@@ -88,7 +88,7 @@ def test_informe_sin_red(monkeypatch, tmp_path):
 
     monkeypatch.setattr(http, "fetch_bytes", sin_red)
     md = report.generar(FECHA_INFORME, tmp_path / "x", usar_rbn=False).read_text()
-    assert md.count("_Sin datos esta semana._") >= 5
+    assert md.count("_Sin datos esta semana") >= 5
     assert "amanece a las" in md                         # la línea gris no necesita red
 
 
@@ -114,3 +114,31 @@ def test_cli_comprobar(tmp_path, capsys):
                                              (None, 0, "—")])
 def test_formato_es(valor, dec, txt):
     assert report.formato_es(valor, dec) == txt
+
+
+def test_informe_con_giro_caido(internet_falsa, monkeypatch, tmp_path):
+    """Como en 2026-W42: GIRO responde 504 y todo lo demás funciona."""
+    from propagacion import config
+    from propagacion.sources import giro
+
+    llamadas = []
+
+    def caido(url, params=None, **kw):
+        if url == config.URL_GIRO:
+            llamadas.append(params["ursiCode"])
+            raise http.FuenteNoDisponible("504 Gateway Timeout")
+        return internet_falsa(url, params, **kw)
+
+    monkeypatch.setattr(http, "fetch_bytes", caido)
+    md = report.generar(FECHA_INFORME, tmp_path / "x", usar_rbn=False).read_text()
+    # Dos estaciones fallidas bastan para dar el servidor por caído
+    assert llamadas == ["EA036", "EB040"]
+    assert "el servidor de GIRO (lgdc.uml.edu) no respondió" in md
+    if voacap.disponible():
+        # MUF de respaldo con VOACAP, rotulada como modelada
+        assert "**MUF(3000) modelada con VOACAP**" in md
+        assert "de noche._\n\n_La línea naranja" in md           # dos párrafos, no pegados
+        assert "MUF(3000)F2 medida" not in md.split("### DX de la semana")[0]
+    else:
+        assert "no hay línea de MUF" in md
+    assert giro  # el módulo sigue importable

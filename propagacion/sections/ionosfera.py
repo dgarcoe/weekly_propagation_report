@@ -28,18 +28,28 @@ PROVEEDORES = {"EA036": "El Arenosillo (INTA)", "EB040": "Roquetes (Observatori 
 # Magnitudes que llevamos a la latitud de Vigo (la Es es local y no se interpola).
 INTERPOLADAS = ("foF2", "MUF(D)", "M(D)", "hmF2", "fmin")
 DIAS_REFERENCIA = 30
+GIRO_CAIDO = ("el servidor de GIRO (lgdc.uml.edu) no respondió a ninguna de las ionosondas, "
+              "así que esta semana no hay medidas de foF2, MUF ni esporádica E")
 
 
 def medir(p: Periodo) -> dict:
     lat0, lon0 = geo.locator_to_latlon(config.STATION_LOCATOR)
     medidas: dict[str, list[io.Medida]] = {}
+    fallos_seguidos = 0
     for est in config.IONOSONDAS:
+        # Todas las estaciones salen del mismo servidor: si dos seguidas fallan, está caído
+        # y no merece la pena esperar a los reintentos de las demás.
+        if fallos_seguidos >= 2:
+            log.warning("GIRO %s: omitida (el servidor no responde)", est.ursi)
+            continue
         try:
             medidas[est.ursi] = giro.descargar(est.ursi, p.inicio, p.fin + timedelta(days=1))
+            fallos_seguidos = 0
         except FuenteNoDisponible as e:
             log.warning("GIRO %s: %s", est.ursi, e)
+            fallos_seguidos += 1
     if not medidas:
-        raise FuenteNoDisponible("ninguna ionosonda con datos esta semana")
+        raise FuenteNoDisponible(GIRO_CAIDO)
     # Solo la semana analizada (el servicio puede devolver algo del día siguiente)
     medidas = {u: [m for m in ms if p.inicio <= m.time.date() <= p.fin] for u, ms in medidas.items()}
 
@@ -210,7 +220,7 @@ def _curiosidades(iono: dict) -> dict:
 
 def construir(p: Periodo, outdir: Path, iono: dict, sol: dict, contactos) -> dict:
     if not iono.get("ok"):
-        return {"ok": False, "fuentes": [], "avisos": []}
+        return {"ok": False, "motivo": iono.get("motivo"), "fuentes": [], "avisos": []}
     info = {e.ursi: e for e in config.IONOSONDAS}
     return {
         "ok": True,

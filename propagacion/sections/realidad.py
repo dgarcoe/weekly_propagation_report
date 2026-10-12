@@ -164,8 +164,9 @@ def etiquetas_rosa(vistos: dict[str, tuple[float, float, str | None]]
 
 
 def construir(p: Periodo, outdir: Path, usar_rbn: bool = True,
-              muf3000: dict[int, float] | None = None) -> dict:
-    """``muf3000``: MUF(3000)F2 medida por hora UTC, para dibujarla sobre el mapa de calor."""
+              muf3000: dict[int, float] | None = None, muf_origen: str = "medida") -> dict:
+    """``muf3000``: MUF(3000) por hora UTC para dibujarla sobre el mapa de calor;
+    ``muf_origen``: «medida» (ionosondas) o «modelada» (VOACAP, si GIRO no respondió)."""
     res: dict = {"ok": False, "fuentes": [], "avisos": []}
     contactos: list[Contacto] = []
     try:
@@ -202,10 +203,12 @@ def construir(p: Periodo, outdir: Path, usar_rbn: bool = True,
         "Spots por hora y banda: Galicia (WSPR) y distrito EA1 (RBN)",
         f"WSPR + RBN · {p.inicio:%d/%m}–{p.fin:%d/%m/%Y} · cuadrículas "
         f"{', '.join(config.GALICIA_SQUARES)} (WSPR) y distrito EA1 (RBN)"
-        + (" · línea: MUF(3000)F2 medida (ionosondas, estimada en Vigo)" if muf3000 else ""),
+        + ((" · línea: MUF(3000)F2 medida (ionosondas, estimada en Vigo)" if muf_origen == "medida"
+            else " · línea: MUF(3000) modelada con VOACAP (las ionosondas no respondieron)")
+           if muf3000 else ""),
         techo=charts.techo_muf(bandas, {b: config.BANDAS[b][2] for b in bandas}, muf3000)
-        if muf3000 else None).name
-    res["techo_muf"] = bool(muf3000)
+        if muf3000 else None, techo_etiqueta=f"MUF(3000) {muf_origen}").name
+    res["techo_muf"] = muf_origen if muf3000 else None
     res["_contactos"] = contactos       # para cruzarlos con la ionosfera (no se imprime)
     # Bandas y horas más activas (texto automático)
     por_banda = Counter(c.banda for c in contactos)

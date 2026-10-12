@@ -37,8 +37,8 @@ jobs:
       - name: Generar informe de prueba
         run: |
           python -m propagacion --salida /tmp/informe 2>&1 | grep -E 'WARNING|ERROR|informe'
-          echo "Secciones sin datos: $(grep -c '_Sin datos esta semana._' /tmp/informe/informe.md || true)"
-          sed -n '/^Esta semana se registraron/,/^Las bandas/p;/^### Rutas/,/^Spots de/p;/^\*\*Próximos 3 días/,/^| mié/p;/^### DX: fiabilidad/,/^_Supuestos/p' /tmp/informe/informe.md
+          echo "Secciones sin datos: $(grep -c '_Sin datos esta semana' /tmp/informe/informe.md || true)"
+          grep -n -A4 'MUF(3000) m\|Sin datos esta semana' /tmp/informe/informe.md | cut -c1-250
           echo "### Informe de prueba" >> "$GITHUB_STEP_SUMMARY"
           cat /tmp/informe/informe.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4

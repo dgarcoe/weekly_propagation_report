@@ -124,7 +124,44 @@ def _instalar_antenas(base: Path) -> None:
         shutil.copyfile(f, dest / f.name)
 
 
+def parse_muf(output: str) -> dict[int, float]:
+    """{hora UTC: MUF del circuito} (segundo número de cada línea ``FREQ``)."""
+    out = {}
+    for line in output.splitlines():
+        toks = line.split()
+        if toks and toks[-1] == "FREQ" and len(toks) > 2:
+            try:
+                out[int(float(toks[0])) % 24] = float(toks[1])
+            except ValueError:
+                continue
+    return out
+
+
 def run(deck: str, n_freqs: int, timeout: int = 120) -> dict[int, list[float]]:
+    rel = parse_rel(run_salida(deck, timeout), n_freqs)
+    if not rel:
+        raise VoacapNoDisponible("voacapl no devolvió filas REL")
+    return rel
+
+
+def muf_modelada(lat: float, lon: float, year: int, month: int, ssn: float,
+                 distancia_km: float = 3000) -> dict[int, float]:
+    """MUF mediana mensual de VOACAP para un salto de ``distancia_km`` centrado en (lat, lon).
+
+    Es el equivalente modelado de la MUF(3000)F2 de una ionosonda: un circuito norte-sur
+    cuyo punto medio es la estación. Sirve de respaldo cuando GIRO no responde.
+    """
+    medio = distancia_km / 2 / 111.2          # grados de latitud a cada lado
+    deck = build_deck((lat - medio, lon, "SUR"), (lat + medio, lon, "NORTE"),
+                      year, month, ssn, [14.1])
+    muf = parse_muf(run_salida(deck))
+    if not muf:
+        raise VoacapNoDisponible("voacapl no devolvió la MUF")
+    return muf
+
+
+def run_salida(deck: str, timeout: int = 120) -> str:
+    """Ejecuta voacapl con la tarjeta ``deck`` y devuelve el texto de salida."""
     if not disponible():
         raise VoacapNoDisponible("voacapl no está instalado (o falta ~/itshfbc)")
     base = itshfbc_dir()
@@ -141,7 +178,4 @@ def run(deck: str, n_freqs: int, timeout: int = 120) -> dict[int, list[float]]:
     finally:
         for f in (inp, out):
             f.unlink(missing_ok=True)
-    rel = parse_rel(text, n_freqs)
-    if not rel:
-        raise VoacapNoDisponible("voacapl no devolvió filas REL")
-    return rel
+    return text

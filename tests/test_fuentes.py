@@ -269,3 +269,16 @@ def test_voacap_40m_a_sudamerica_abre_en_ft8():
                              [3.6, 7.1, 14.1], voacap.Parametros(snr_requerida=voacap.MODOS["FT8"]))
     rel = voacap.run(deck, 3)
     assert max(v[1] for v in rel.values()) >= 0.5
+
+
+def test_voacap_parse_muf_salida_real():
+    muf = voacap.parse_muf((FIX / "voacapx_vigo_ny.out").read_text())
+    assert sorted(muf) == list(range(24))
+    assert all(3 < m < 40 for m in muf.values())
+
+
+@pytest.mark.skipif(not voacap.disponible(), reason="voacapl no instalado")
+def test_voacap_muf_modelada_de_respaldo():
+    muf = voacap.muf_modelada(42.19, -8.71, 2026, 10, 60)
+    assert len(muf) == 24
+    assert max(muf[h] for h in range(11, 16)) > max(muf[h] for h in (2, 3, 4))   # día > noche
