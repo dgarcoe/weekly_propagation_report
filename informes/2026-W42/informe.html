@@ -1,0 +1,925 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Propagación 2026-W42</title><style>
+    body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:860px;margin:0 auto;
+         padding:16px;line-height:1.55;color:#0b0b0b;background:#fcfcfb}
+    img{max-width:100%;height:auto}
+    table{border-collapse:collapse;display:block;overflow-x:auto;font-variant-numeric:tabular-nums}
+    th,td{border-bottom:1px solid #e1e0d9;padding:4px 8px;text-align:left;white-space:nowrap}
+    blockquote{border-left:3px solid #2a78d6;margin:0;padding:0 12px;color:#52514e}
+    </style></head><body><h1>Propagación HF/VHF desde Vigo · semana 2026-W42</h1>
+<p><strong>EA1RKV · Unión de Radioaficionados de Vigo-Val Miñor</strong> · estación de referencia
+Vigo (IN52PE) · semana analizada: 5 de octubre de 2026 – 11 de octubre de 2026 ·
+previsión: lun 12/10 – dom 18/10</p>
+<blockquote>
+<p>Este informe combina <strong>lo que dice la teoría</strong> (índices solares, predicciones) con <strong>lo que pasó
+de verdad</strong> (spots reales desde Galicia). Todas las horas en UTC salvo que se indique lo contrario.</p>
+</blockquote>
+<h2>1. El Sol y el campo geomagnético</h2>
+<ul>
+<li><strong>Flujo solar (SFI):</strong> media <strong>116</strong>, máximo 126, mínimo 100 ·
+  tendencia frente a la semana anterior: <strong>al alza (+26 %)</strong> (media previa 93).</li>
+<li><strong>SSN efectivo aproximado:</strong> ≈ <strong>60</strong> (SSN ≈ 1,14·SFI − 73,2) · número de manchas observado (media): 81.</li>
+<li><strong>Campo geomagnético:</strong> 🔴 <strong>tormenta geomagnética (G3)</strong> · Kp máximo <strong>7,00</strong> · Ap medio <strong>17</strong> (máx. 46) · 4 día(s) con Kp ≥ 4.</li>
+<li><strong>Fulguraciones:</strong> 0 de clase X y 7 de clase M — la mayor, <strong>M6.7</strong> (jue 8/10 15:48 UTC). Una fulguración fuerte en el lado diurno puede provocar un <em>apagón de radio</em> (absorción en la capa D) durante minutos u horas.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Día</th>
+<th style="text-align: right;">SFI</th>
+<th style="text-align: right;">Manchas</th>
+<th style="text-align: right;">Ap</th>
+<th style="text-align: right;">Kp máx.</th>
+<th style="text-align: center;"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>lun 5/10</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">58</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">5,33</td>
+<td style="text-align: center;">🔴</td>
+</tr>
+<tr>
+<td>mar 6/10</td>
+<td style="text-align: right;">113</td>
+<td style="text-align: right;">77</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">3,00</td>
+<td style="text-align: center;">🟢</td>
+</tr>
+<tr>
+<td>mié 7/10</td>
+<td style="text-align: right;">114</td>
+<td style="text-align: right;">78</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">2,67</td>
+<td style="text-align: center;">🟢</td>
+</tr>
+<tr>
+<td>jue 8/10</td>
+<td style="text-align: right;">119</td>
+<td style="text-align: right;">69</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">2,00</td>
+<td style="text-align: center;">🟢</td>
+</tr>
+<tr>
+<td>vie 9/10</td>
+<td style="text-align: right;">121</td>
+<td style="text-align: right;">93</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">4,00</td>
+<td style="text-align: center;">🟡</td>
+</tr>
+<tr>
+<td>sáb 10/10</td>
+<td style="text-align: right;">126</td>
+<td style="text-align: right;">99</td>
+<td style="text-align: right;">46</td>
+<td style="text-align: right;">7,00</td>
+<td style="text-align: center;">🔴</td>
+</tr>
+<tr>
+<td>dom 11/10</td>
+<td style="text-align: right;">122</td>
+<td style="text-align: right;">94</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">4,00</td>
+<td style="text-align: center;">🟡</td>
+</tr>
+</tbody>
+</table>
+<p><em>Semáforo Kp: 🟢 ≤ 3 tranquilo · 🟡 4 inquieto · 🔴 ≥ 5 tormenta.</em></p>
+<p><img alt="La semana del Sol: rayos X, SFI y Kp" src="semana_solar.png" /></p>
+<p><em>Cómo leerla, de arriba abajo. <strong>Rayos X:</strong> cada pico es una fulguración; si entra en la franja
+rosa (clases M y X), en la cara iluminada de la Tierra la capa D absorbe la HF durante minutos u
+horas (el famoso «apagón de radio»). Los huecos de la línea son cortes de datos: cerca de los
+equinoccios el satélite pasa cada día un rato por la sombra de la Tierra. <strong>SFI:</strong> cuanto más alto, más arriba llega la MUF.
+<strong>Kp:</strong> agitación del campo magnético cada 3 horas; las barras rojas son tormenta.</em></p>
+<p><img alt="Flujo solar de los últimos 12 meses y previsión" src="sfi_12meses.png" /></p>
+<p><em>Estamos en la fase descendente del ciclo 25: el SFI baja poco a poco, con altibajos de ~27 días
+(la rotación del Sol). La línea discontinua naranja marca la tendencia del último año; a la
+derecha, en violeta, la previsión mensual de NOAA con su rango de incertidumbre (zona sombreada).</em></p>
+<h3>¿Qué viene? Previsión de la actividad solar</h3>
+<p><strong>Próximos 3 días</strong> (NOAA, la previsión más fiable; emitida el lun 12/10 12:30 UTC):</p>
+<table>
+<thead>
+<tr>
+<th>Día</th>
+<th style="text-align: right;">Kp máx. previsto</th>
+<th style="text-align: center;"></th>
+<th style="text-align: right;">Prob. apagón de radio R1–R2</th>
+<th style="text-align: right;">Prob. apagón fuerte (R3+)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>lun 12/10</td>
+<td style="text-align: right;">4,00</td>
+<td style="text-align: center;">🟡</td>
+<td style="text-align: right;">55 %</td>
+<td style="text-align: right;">15 %</td>
+</tr>
+<tr>
+<td>mar 13/10</td>
+<td style="text-align: right;">5,00</td>
+<td style="text-align: center;">🔴</td>
+<td style="text-align: right;">50 %</td>
+<td style="text-align: right;">10 %</td>
+</tr>
+<tr>
+<td>mié 14/10</td>
+<td style="text-align: right;">3,67</td>
+<td style="text-align: center;">🟢</td>
+<td style="text-align: right;">45 %</td>
+<td style="text-align: right;">5 %</td>
+</tr>
+</tbody>
+</table>
+<p><em>R1–R2 = fulguración M (apagón menor o moderado en la cara diurna); R3+ = fulguración X.</em></p>
+<p><strong>Esta semana:</strong> SFI entre 95 y 120, Ap máximo 28 y
+Kp máximo 5 (🔴 tormenta geomagnética (G1)); días con Kp ≥ 4 previstos:
+lun 12/10, mar 13/10.</p>
+<p><img alt="Previsión de NOAA a 27 días" src="prevision_27dias.png" /></p>
+<p><strong>Hasta el sáb 7/11:</strong> SFI entre 95 y 120; posible
+agitación geomagnética (Kp ≥ 4) el lun 12/10, mar 13/10, jue 22/10, vie 23/10, sáb 31/10, dom 1/11.
+<em>Esta previsión se basa en que el Sol gira sobre sí mismo cada ~27 días: las regiones activas y
+los agujeros coronales que vimos hace una rotación suelen «volver a asomarse». Por eso acierta
+bastante con las tendencias, pero no puede anticipar una fulguración concreta.</em></p>
+<p><strong>A largo plazo:</strong> NOAA prevé para abril de 2027 un SFI medio mensual de
+<strong>119</strong> (entre 105 y 130). Es decir, el ciclo 25 sigue
+bajando: poco a poco, 10 m y 12 m abrirán menos días. <strong>Ojo:</strong> la media de los últimos
+27 días (104) va <strong>por debajo</strong> del rango que NOAA preveía para este mes
+(unos 126): el Sol se está apagando más
+deprisa de lo esperado, y las bandas altas lo notarán.</p>
+<h2>2. Lo que pasó de verdad desde Galicia</h2>
+<p>Esta semana se registraron <strong>340 495 spots</strong>: 299 987 de WSPR con una
+estación gallega en un extremo (3 estaciones en las cuadrículas IN52/IN53) y
+40 508 de la Reverse Beacon Network en CW/RTTY con una estación del <strong>distrito EA1</strong> (el RBN
+no da locator, así que no podemos separar Galicia de Asturias, Cantabria y Castilla y León).
+Las bandas con más actividad fueron <strong>40m</strong> (99 446), <strong>20m</strong> (76 505), <strong>160m</strong> (40 478), <strong>80m</strong> (34 113), y la hora más movida, las <strong>18 UTC</strong>.</p>
+<p><img alt="Mapa de calor de spots por hora UTC y banda" src="heatmap_hora_banda.png" /></p>
+<p><em>Cómo leerlo: cada casilla es una hora UTC en una banda; cuanto más oscura, más spots. Fíjate en
+cómo las bandas altas (10–15 m) se «encienden» con el Sol y las bajas (40–80 m) de noche.</em></p>
+<h3>DX de la semana por banda</h3>
+<table>
+<thead>
+<tr>
+<th>Banda</th>
+<th style="text-align: right;">Distancia</th>
+<th>Estación gallega (WSPR)</th>
+<th>Corresponsal</th>
+<th>Locator</th>
+<th>Continente</th>
+<th>Cuándo</th>
+<th style="text-align: right;">SNR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>160m</td>
+<td style="text-align: right;">6 308 km</td>
+<td>EB1A</td>
+<td>N9AWU (oyó a Galicia)</td>
+<td>EM69sm</td>
+<td>Norteamérica</td>
+<td>mar 6/10 04:54 UTC</td>
+<td style="text-align: right;">-27 dB</td>
+</tr>
+<tr>
+<td>80m</td>
+<td style="text-align: right;">18 000 km</td>
+<td>EB1A</td>
+<td>VK7FLYN/2 (oyó a Galicia)</td>
+<td>QE38lr</td>
+<td>Oceanía</td>
+<td>mié 7/10 19:42 UTC</td>
+<td style="text-align: right;">-21 dB</td>
+</tr>
+<tr>
+<td>60m</td>
+<td style="text-align: right;">18 000 km</td>
+<td>EB1A</td>
+<td>VK7FLYN (oyó a Galicia)</td>
+<td>QE38lr</td>
+<td>Oceanía</td>
+<td>vie 9/10 20:04 UTC</td>
+<td style="text-align: right;">-24 dB</td>
+</tr>
+<tr>
+<td>40m</td>
+<td style="text-align: right;">19 820 km</td>
+<td>EB1A</td>
+<td>ZL2005SWL (oyó a Galicia)</td>
+<td>RE68mx</td>
+<td>Oceanía</td>
+<td>mar 6/10 06:06 UTC</td>
+<td style="text-align: right;">-25 dB</td>
+</tr>
+<tr>
+<td>30m</td>
+<td style="text-align: right;">19 820 km</td>
+<td>EB1A</td>
+<td>ZL2005SWL (oyó a Galicia)</td>
+<td>RE68mx</td>
+<td>Oceanía</td>
+<td>mié 7/10 05:58 UTC</td>
+<td style="text-align: right;">-27 dB</td>
+</tr>
+<tr>
+<td>20m</td>
+<td style="text-align: right;">19 820 km</td>
+<td>EB1A</td>
+<td>ZL2005SWL (oyó a Galicia)</td>
+<td>RE68mx</td>
+<td>Oceanía</td>
+<td>mié 7/10 06:56 UTC</td>
+<td style="text-align: right;">-26 dB</td>
+</tr>
+<tr>
+<td>17m</td>
+<td style="text-align: right;">18 000 km</td>
+<td>EB1A</td>
+<td>VK7FLYN/2 (oyó a Galicia)</td>
+<td>QE38lr</td>
+<td>Oceanía</td>
+<td>jue 8/10 07:42 UTC</td>
+<td style="text-align: right;">-26 dB</td>
+</tr>
+<tr>
+<td>15m</td>
+<td style="text-align: right;">17 837 km</td>
+<td>EB1A</td>
+<td>VK2JPB (oyó a Galicia)</td>
+<td>QF59tl</td>
+<td>Oceanía</td>
+<td>jue 8/10 13:54 UTC</td>
+<td style="text-align: right;">-23 dB</td>
+</tr>
+</tbody>
+</table>
+<p><em>Distancias de círculo máximo medidas desde IN52PE (WSPR).</em></p>
+<h3>Rutas por continente</h3>
+<p>Spots de WSPR (Galicia) y RBN (distrito EA1) juntos, por continente del corresponsal:</p>
+<table>
+<thead>
+<tr>
+<th>Continente</th>
+<th style="text-align: right;">Spots</th>
+<th style="text-align: right;">160m</th>
+<th style="text-align: right;">80m</th>
+<th style="text-align: right;">60m</th>
+<th style="text-align: right;">40m</th>
+<th style="text-align: right;">30m</th>
+<th style="text-align: right;">20m</th>
+<th style="text-align: right;">17m</th>
+<th style="text-align: right;">15m</th>
+<th style="text-align: right;">12m</th>
+<th style="text-align: right;">10m</th>
+<th style="text-align: right;">6m</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Europa</td>
+<td style="text-align: right;"><strong>289 831</strong></td>
+<td style="text-align: right;">38286</td>
+<td style="text-align: right;">32241</td>
+<td style="text-align: right;">20302</td>
+<td style="text-align: right;">88286</td>
+<td style="text-align: right;">28958</td>
+<td style="text-align: right;">61862</td>
+<td style="text-align: right;">10541</td>
+<td style="text-align: right;">9286</td>
+<td style="text-align: right;">26</td>
+<td style="text-align: right;">42</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>Norteamérica</td>
+<td style="text-align: right;"><strong>38 844</strong></td>
+<td style="text-align: right;">862</td>
+<td style="text-align: right;">1334</td>
+<td style="text-align: right;">3053</td>
+<td style="text-align: right;">8114</td>
+<td style="text-align: right;">1491</td>
+<td style="text-align: right;">12546</td>
+<td style="text-align: right;">3592</td>
+<td style="text-align: right;">7795</td>
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">·</td>
+</tr>
+<tr>
+<td>África</td>
+<td style="text-align: right;"><strong>7 183</strong></td>
+<td style="text-align: right;">1330</td>
+<td style="text-align: right;">512</td>
+<td style="text-align: right;">547</td>
+<td style="text-align: right;">1294</td>
+<td style="text-align: right;">840</td>
+<td style="text-align: right;">935</td>
+<td style="text-align: right;">830</td>
+<td style="text-align: right;">880</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">·</td>
+</tr>
+<tr>
+<td>Oceanía</td>
+<td style="text-align: right;"><strong>2 873</strong></td>
+<td style="text-align: right;">·</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">67</td>
+<td style="text-align: right;">1285</td>
+<td style="text-align: right;">505</td>
+<td style="text-align: right;">742</td>
+<td style="text-align: right;">146</td>
+<td style="text-align: right;">104</td>
+<td style="text-align: right;">·</td>
+<td style="text-align: right;">·</td>
+<td style="text-align: right;">·</td>
+</tr>
+<tr>
+<td>Sudamérica</td>
+<td style="text-align: right;"><strong>920</strong></td>
+<td style="text-align: right;">·</td>
+<td style="text-align: right;">·</td>
+<td style="text-align: right;">·</td>
+<td style="text-align: right;">218</td>
+<td style="text-align: right;">37</td>
+<td style="text-align: right;">81</td>
+<td style="text-align: right;">81</td>
+<td style="text-align: right;">395</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">102</td>
+<td style="text-align: right;">·</td>
+</tr>
+<tr>
+<td>Asia</td>
+<td style="text-align: right;"><strong>844</strong></td>
+<td style="text-align: right;">·</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">249</td>
+<td style="text-align: right;">38</td>
+<td style="text-align: right;">339</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: right;">169</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">·</td>
+</tr>
+</tbody>
+</table>
+<p><img alt="Rutas desde Vigo por rumbo y distancia" src="rutas_continentes.png" /></p>
+<p><em>Mapa centrado en Vigo: el ángulo es el rumbo al que apuntaría tu antena y la distancia al centro,
+los kilómetros. Solo WSPR, porque el RBN no da locator: cada punto es un locator distinto
+(1 380 en total) y la cifra entre paréntesis es cuántos hay de cada continente. Por eso no
+coincide con los spots de la tabla, que suman todos los spots de WSPR y RBN.</em></p>
+<h3>La ionosfera medida</h3>
+<p><em>Sin datos esta semana.</em></p>
+<h2>3. Previsión para la semana (lun 12/10 – dom 18/10)</h2>
+<h3>DX: fiabilidad prevista (VOACAP)</h3>
+<p><strong>En FT8</strong> (el modo más usado, y el más parecido a los spots WSPR/RBN de la sección 2): bandas con
+fiabilidad media ≥ 50 % por franja horaria (UTC), la mejor primero. En cursiva, la mejor banda
+cuando ninguna llega al 50 % (apertura posible pero poco fiable):</p>
+<table>
+<thead>
+<tr>
+<th>Destino</th>
+<th style="text-align: right;">km</th>
+<th style="text-align: right;">Rumbo</th>
+<th>00–04</th>
+<th>04–08</th>
+<th>08–12</th>
+<th>12–16</th>
+<th>16–20</th>
+<th>20–24</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Norteamérica este (Nueva York)</td>
+<td style="text-align: right;">5 307</td>
+<td style="text-align: right;">291°</td>
+<td>40m, 80m, 30m</td>
+<td>80m, 40m, 30m</td>
+<td>40m, 30m</td>
+<td>17m, 20m, 15m</td>
+<td>20m, 17m, 15m</td>
+<td>40m, 30m, 20m</td>
+</tr>
+<tr>
+<td>Caribe (Santo Domingo)</td>
+<td style="text-align: right;">6 288</td>
+<td style="text-align: right;">265°</td>
+<td>40m, 30m, 80m</td>
+<td>40m, 30m, 80m</td>
+<td>30m, 20m, 40m</td>
+<td>17m, 15m, 20m</td>
+<td>17m, 15m, 20m</td>
+<td>30m, 40m, 20m</td>
+</tr>
+<tr>
+<td>Sudamérica (Buenos Aires)</td>
+<td style="text-align: right;">9 922</td>
+<td style="text-align: right;">219°</td>
+<td>20m, 30m, 17m</td>
+<td>30m, 20m, 40m</td>
+<td>17m, 15m</td>
+<td>12m, 15m, 10m</td>
+<td>10m, 12m, 15m</td>
+<td>17m, 20m, 15m</td>
+</tr>
+<tr>
+<td>Japón (Tokio)</td>
+<td style="text-align: right;">10 780</td>
+<td style="text-align: right;">25°</td>
+<td><em>30m (20 %)</em></td>
+<td>—</td>
+<td>17m</td>
+<td><em>20m (44 %)</em></td>
+<td>30m, 20m</td>
+<td>30m</td>
+</tr>
+<tr>
+<td>Oceanía (Sídney)</td>
+<td style="text-align: right;">18 035</td>
+<td style="text-align: right;">69°</td>
+<td>—</td>
+<td>—</td>
+<td><em>12m (48 %)</em></td>
+<td><em>15m (39 %)</em></td>
+<td><em>20m (45 %)</em></td>
+<td><em>20m (32 %)</em></td>
+</tr>
+<tr>
+<td>Sudáfrica (Johannesburgo)</td>
+<td style="text-align: right;">8 489</td>
+<td style="text-align: right;">146°</td>
+<td>20m, 30m, 40m</td>
+<td><em>20m (43 %)</em></td>
+<td>12m, 15m</td>
+<td>12m, 10m, 15m</td>
+<td>12m, 15m, 17m</td>
+<td>20m, 17m, 30m</td>
+</tr>
+</tbody>
+</table>
+<p><img alt="Fiabilidad VOACAP por destino, banda y hora" src="voacap_fiabilidad.png" /></p>
+<p><strong>En CW</strong> (a oído hace falta unos 14 dB más de señal que en FT8, así que se abren menos bandas):</p>
+<table>
+<thead>
+<tr>
+<th>Destino</th>
+<th>00–04</th>
+<th>04–08</th>
+<th>08–12</th>
+<th>12–16</th>
+<th>16–20</th>
+<th>20–24</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Norteamérica este (Nueva York)</td>
+<td>40m, 30m, 80m</td>
+<td>40m, 80m</td>
+<td><em>30m (50 %)</em></td>
+<td>17m</td>
+<td>20m, 17m, 15m</td>
+<td>40m, 30m</td>
+</tr>
+<tr>
+<td>Caribe (Santo Domingo)</td>
+<td>40m</td>
+<td>40m</td>
+<td><em>20m (37 %)</em></td>
+<td><em>15m (44 %)</em></td>
+<td>17m, 15m</td>
+<td>30m, 40m</td>
+</tr>
+<tr>
+<td>Sudamérica (Buenos Aires)</td>
+<td>20m</td>
+<td><em>20m (44 %)</em></td>
+<td><em>15m (42 %)</em></td>
+<td>12m, 10m</td>
+<td>10m, 12m</td>
+<td>17m</td>
+</tr>
+<tr>
+<td>Japón (Tokio)</td>
+<td>—</td>
+<td>—</td>
+<td><em>17m (27 %)</em></td>
+<td>—</td>
+<td><em>20m (24 %)</em></td>
+<td><em>30m (24 %)</em></td>
+</tr>
+<tr>
+<td>Oceanía (Sídney)</td>
+<td>—</td>
+<td>—</td>
+<td><em>12m (22 %)</em></td>
+<td>—</td>
+<td><em>17m (20 %)</em></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Sudáfrica (Johannesburgo)</td>
+<td><em>20m (48 %)</em></td>
+<td>—</td>
+<td><em>12m (48 %)</em></td>
+<td>12m, 10m</td>
+<td>12m, 10m, 15m</td>
+<td>17m, 20m</td>
+</tr>
+</tbody>
+</table>
+<p><em>Supuestos: 100 W, dipolos de media onda a media longitud de onda de altura en los dos extremos,
+ángulo de salida mínimo de 3° y ruido residencial. SSN usado: <strong>47</strong> (SSN efectivo del SFI previsto (106)).
+En SSB hacen falta ~30 dB más que en FT8. VOACAP describe el promedio mensual: un día concreto puede
+ir mucho mejor o peor.</em></p>
+<h3>NVIS y contactos regionales (80 y 40 m)</h3>
+<p><em>Sin datos esta semana.</em></p>
+<h3>Línea gris</h3>
+<p>El jue 15/10, en Vigo amanece a las <strong>06:47 UTC</strong> y anochece a las <strong>17:53 UTC</strong>.
+Durante el crepúsculo la absorción de la capa D desaparece antes de que se deshaga la capa F: es
+el momento de buscar DX en 160, 80 y 40 m a lo largo del terminador.</p>
+<table>
+<thead>
+<tr>
+<th>Destino</th>
+<th>Orto DX</th>
+<th>Ocaso DX</th>
+<th>Terminador común (±45 min)</th>
+<th>Noche en los dos extremos</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Norteamérica este (Nueva York)</td>
+<td>11:07</td>
+<td>22:15</td>
+<td>—</td>
+<td>22:17–06:47</td>
+</tr>
+<tr>
+<td>Caribe (Santo Domingo)</td>
+<td>10:33</td>
+<td>22:17</td>
+<td>—</td>
+<td>22:17–06:47</td>
+</tr>
+<tr>
+<td>Sudamérica (Buenos Aires)</td>
+<td>09:11</td>
+<td>22:07</td>
+<td>—</td>
+<td>22:06–06:47</td>
+</tr>
+<tr>
+<td>Japón (Tokio)</td>
+<td>20:47</td>
+<td>08:06</td>
+<td>07:21–07:32 UTC (orto Vigo / ocaso DX)</td>
+<td>17:53–20:48</td>
+</tr>
+<tr>
+<td>Oceanía (Sídney)</td>
+<td>19:14</td>
+<td>08:08</td>
+<td>18:28–18:38 UTC (ocaso Vigo / orto DX)</td>
+<td>17:53–19:13</td>
+</tr>
+<tr>
+<td>Sudáfrica (Johannesburgo)</td>
+<td>03:33</td>
+<td>16:14</td>
+<td>—</td>
+<td>17:54–03:33</td>
+</tr>
+</tbody>
+</table>
+<p><em>El «terminador común» es la línea gris propiamente dicha (amanecer o anochecer a la vez en los dos
+extremos). La «noche en los dos extremos» es la ventana para 160 y 80 m, y a menudo para 40 m.</em></p>
+<h2>4. Agenda y efemérides</h2>
+<h3>Concursos del fin de semana</h3>
+<table>
+<thead>
+<tr>
+<th>Concurso</th>
+<th>Empieza (UTC)</th>
+<th>Termina (UTC)</th>
+<th style="text-align: right;">Horas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://www.contestcalendar.com/weeklycontdetails.php?ref=003fsw21">K1USN Slow Speed Test</a></td>
+<td>vie 16/10 20:00</td>
+<td>vie 16/10 21:00</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td><a href="https://www.contestcalendar.com/weeklycontdetails.php?ref=003fjnv5">JARL WW RTTY Contest</a></td>
+<td>sáb 17/10 00:00</td>
+<td>lun 19/10 00:00</td>
+<td style="text-align: right;">48</td>
+</tr>
+<tr>
+<td><a href="https://www.contestcalendar.com/weeklycontdetails.php?ref=003b1uhl">New York QSO Party</a></td>
+<td>sáb 17/10 14:00</td>
+<td>dom 18/10 02:00</td>
+<td style="text-align: right;">12</td>
+</tr>
+<tr>
+<td><a href="https://www.contestcalendar.com/weeklycontdetails.php?ref=003fmvlv">Worked All Germany Contest</a></td>
+<td>sáb 17/10 15:00</td>
+<td>dom 18/10 14:59</td>
+<td style="text-align: right;">24</td>
+</tr>
+<tr>
+<td><a href="https://www.contestcalendar.com/weeklycontdetails.php?ref=003fllcf">Stew Perry Topband Challenge</a></td>
+<td>sáb 17/10 15:00</td>
+<td>dom 18/10 15:00</td>
+<td style="text-align: right;">24</td>
+</tr>
+<tr>
+<td><a href="https://www.contestcalendar.com/weeklycontdetails.php?ref=003fbb5g">Feld Hell Sprint</a></td>
+<td>sáb 17/10 20:00</td>
+<td>sáb 17/10 23:59</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td><a href="https://www.contestcalendar.com/weeklycontdetails.php?ref=003fh3my">Argentina National 7 MHz Contest</a></td>
+<td>sáb 17/10 21:30</td>
+<td>sáb 17/10 23:30</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td><a href="https://www.contestcalendar.com/weeklycontdetails.php?ref=003fhipg">Asia-Pacific Fall Sprint, CW</a></td>
+<td>dom 18/10 00:00</td>
+<td>dom 18/10 02:00</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td><a href="https://www.contestcalendar.com/weeklycontdetails.php?ref=003fm0qt">UBA ON Contest, 2m</a></td>
+<td>dom 18/10 07:00</td>
+<td>dom 18/10 10:00</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr>
+<td><a href="https://www.contestcalendar.com/weeklycontdetails.php?ref=003b21yv">Illinois QSO Party</a></td>
+<td>dom 18/10 17:00</td>
+<td>lun 19/10 01:00</td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr>
+<td><a href="https://www.contestcalendar.com/weeklycontdetails.php?ref=003feb4x">Run for the Bacon QRP Contest</a></td>
+<td>dom 18/10 23:00</td>
+<td>lun 19/10 01:00</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+<h3>Lluvias de meteoros (meteor scatter en 6 m y 2 m)</h3>
+<ul>
+<li><strong>Oriónidas</strong> — máximo mié 21/10 (dentro de 9 días), THZ ≈ 20 · <em>activa esta semana</em>.</li>
+</ul>
+<p><em>Consejo: el meteor scatter funciona mejor al amanecer local, cuando la Tierra «barre» los
+meteoros de frente. Modos: MSK144 (6 m/2 m) con WSJT-X.</em></p>
+<h3>Pases de satélites desde Vigo</h3>
+<p>Los mejores pases (elevación máxima ≥ 30°) de cada satélite:</p>
+<table>
+<thead>
+<tr>
+<th>Satélite</th>
+<th>Día</th>
+<th>AOS (UTC)</th>
+<th>LOS (UTC)</th>
+<th>Hora local</th>
+<th style="text-align: right;">Elev. máx.</th>
+<th style="text-align: right;">Min</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AO-7</td>
+<td>lun 12/10</td>
+<td>18:04</td>
+<td>18:26</td>
+<td>20:04</td>
+<td style="text-align: right;">80°</td>
+<td style="text-align: right;">22</td>
+</tr>
+<tr>
+<td>RS-44</td>
+<td>mar 13/10</td>
+<td>03:46</td>
+<td>04:08</td>
+<td>05:46</td>
+<td style="text-align: right;">82°</td>
+<td style="text-align: right;">22</td>
+</tr>
+<tr>
+<td>AO-123</td>
+<td>mar 13/10</td>
+<td>09:00</td>
+<td>09:11</td>
+<td>11:00</td>
+<td style="text-align: right;">66°</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr>
+<td>AO-27</td>
+<td>mar 13/10</td>
+<td>11:18</td>
+<td>11:33</td>
+<td>13:18</td>
+<td style="text-align: right;">70°</td>
+<td style="text-align: right;">15</td>
+</tr>
+<tr>
+<td>ISS</td>
+<td>mié 14/10</td>
+<td>06:43</td>
+<td>06:54</td>
+<td>08:43</td>
+<td style="text-align: right;">89°</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr>
+<td>SO-50</td>
+<td>mié 14/10</td>
+<td>08:54</td>
+<td>09:08</td>
+<td>10:54</td>
+<td style="text-align: right;">66°</td>
+<td style="text-align: right;">14</td>
+</tr>
+<tr>
+<td>RS-44</td>
+<td>mié 14/10</td>
+<td>16:47</td>
+<td>17:10</td>
+<td>18:47</td>
+<td style="text-align: right;">82°</td>
+<td style="text-align: right;">24</td>
+</tr>
+<tr>
+<td>SO-50</td>
+<td>mié 14/10</td>
+<td>17:23</td>
+<td>17:36</td>
+<td>19:23</td>
+<td style="text-align: right;">68°</td>
+<td style="text-align: right;">14</td>
+</tr>
+<tr>
+<td>FO-29</td>
+<td>mié 14/10</td>
+<td>19:27</td>
+<td>19:42</td>
+<td>21:27</td>
+<td style="text-align: right;">87°</td>
+<td style="text-align: right;">15</td>
+</tr>
+<tr>
+<td>AO-27</td>
+<td>mié 14/10</td>
+<td>22:06</td>
+<td>22:21</td>
+<td>00:06</td>
+<td style="text-align: right;">84°</td>
+<td style="text-align: right;">15</td>
+</tr>
+<tr>
+<td>AO-7</td>
+<td>jue 15/10</td>
+<td>07:51</td>
+<td>08:13</td>
+<td>09:51</td>
+<td style="text-align: right;">83°</td>
+<td style="text-align: right;">22</td>
+</tr>
+<tr>
+<td>AO-123</td>
+<td>vie 16/10</td>
+<td>08:52</td>
+<td>09:03</td>
+<td>10:52</td>
+<td style="text-align: right;">87°</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr>
+<td>ISS</td>
+<td>vie 16/10</td>
+<td>11:38</td>
+<td>11:49</td>
+<td>13:38</td>
+<td style="text-align: right;">77°</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr>
+<td>FO-29</td>
+<td>vie 16/10</td>
+<td>19:21</td>
+<td>19:37</td>
+<td>21:21</td>
+<td style="text-align: right;">85°</td>
+<td style="text-align: right;">15</td>
+</tr>
+<tr>
+<td>AO-123</td>
+<td>vie 16/10</td>
+<td>21:46</td>
+<td>21:57</td>
+<td>23:46</td>
+<td style="text-align: right;">82°</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr>
+<td>RS-44</td>
+<td>sáb 17/10</td>
+<td>03:28</td>
+<td>03:49</td>
+<td>05:28</td>
+<td style="text-align: right;">90°</td>
+<td style="text-align: right;">21</td>
+</tr>
+<tr>
+<td>AO-7</td>
+<td>sáb 17/10</td>
+<td>07:43</td>
+<td>08:06</td>
+<td>09:43</td>
+<td style="text-align: right;">90°</td>
+<td style="text-align: right;">22</td>
+</tr>
+<tr>
+<td>AO-27</td>
+<td>sáb 17/10</td>
+<td>10:57</td>
+<td>11:12</td>
+<td>12:57</td>
+<td style="text-align: right;">77°</td>
+<td style="text-align: right;">15</td>
+</tr>
+<tr>
+<td>SO-50</td>
+<td>sáb 17/10</td>
+<td>16:35</td>
+<td>16:48</td>
+<td>18:35</td>
+<td style="text-align: right;">67°</td>
+<td style="text-align: right;">14</td>
+</tr>
+<tr>
+<td>ISS</td>
+<td>dom 18/10</td>
+<td>05:10</td>
+<td>05:21</td>
+<td>07:10</td>
+<td style="text-align: right;">88°</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr>
+<td>FO-29</td>
+<td>dom 18/10</td>
+<td>06:22</td>
+<td>06:40</td>
+<td>08:22</td>
+<td style="text-align: right;">87°</td>
+<td style="text-align: right;">18</td>
+</tr>
+</tbody>
+</table>
+<h2>5. Comentario del club</h2>
+<!-- COMENTARIO -->
+<blockquote>
+<p>PENDIENTE: un socio debe escribir aquí su comentario (qué trabajó, qué oyó, qué recomienda
+para la semana). <strong>El informe no se publica sin este párrafo.</strong></p>
+</blockquote>
+<!-- /COMENTARIO -->
+
+<hr />
+<h3>Fuentes</h3>
+<ul>
+<li>NOAA SWPC — índices solares y geomagnéticos diarios, flujo de rayos X y fulguraciones de GOES, previsión a 3 y 27 días y previsión del ciclo solar (https://www.swpc.noaa.gov/)</li>
+<li>NRC Canada / DRAO Penticton — histórico diario del flujo F10.7 (https://www.spaceweather.gc.ca/)</li>
+<li>WSPRnet vía wspr.live (https://wspr.live/)</li>
+<li>Reverse Beacon Network (https://www.reversebeacon.net/)</li>
+<li>VOACAP (voacapl, port para Linux de J. Watson; https://github.com/jawatson/voacapl)</li>
+<li>WA7BNM Contest Calendar (https://www.contestcalendar.com/)</li>
+<li>International Meteor Organization — calendario de lluvias (https://www.imo.net/)</li>
+<li>CelesTrak — TLE de satélites de radioaficionado (https://celestrak.org/)</li>
+<li>Cálculos propios: SSN efectivo, distancias de círculo máximo, MUF por ley de la secante y
+  orto/ocaso (algoritmo de NOAA).</li>
+</ul>
+<p><sub>Borrador generado automáticamente el 2026-10-12 15:42 UTC por el script del radioclub
+EA1RKV. Las secciones sin datos indican que la fuente no respondió esta semana.</sub></p></body></html>
