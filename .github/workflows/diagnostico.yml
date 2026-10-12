@@ -1,22 +1,47 @@
 name: Diagnóstico de fuentes
 
+# Genera un informe completo en el runner sin abrir PR, para comprobar que todas
+# las fuentes responden. Se lanza a mano (Run workflow) o al tocar el código en
+# una rama claude/**.
 on:
   workflow_dispatch:
   push:
     branches: ["claude/**"]
-    paths: [".github/workflows/diagnostico.yml"]
+    paths: [".github/workflows/diagnostico.yml", "propagacion/**"]
 
 jobs:
   probar:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - name: GIRO - semana completa frente a un día
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Compilar e instalar voacapl
+        continue-on-error: true
         run: |
-          B="https://lgdc.uml.edu/fastchar/getbest?ursiCode=EA036&DMUF=3000"
-          C="charName=foF2,foF1,foEs,MUF(D),M(D),hmF2,fmin,FF,QF"
-          p() { curl -s --max-time 300 -o /tmp/r -w "HTTP %{http_code} · %{time_total} s · %{size_download} B · $1\n" "$B&$2&$3"; grep -c '^20' /tmp/r || true; }
-          p "semana, 9 magnitudes" "$C" "fromDate=2026/10/05+00:00:00&toDate=2026/10/12+00:00:00"
-          p "1 día, 9 magnitudes" "$C" "fromDate=2026/10/05+00:00:00&toDate=2026/10/06+00:00:00"
-          p "2 días, 9 magnitudes" "$C" "fromDate=2026/10/06+00:00:00&toDate=2026/10/08+00:00:00"
-          p "semana, solo foF2" "charName=foF2" "fromDate=2026/10/05+00:00:00&toDate=2026/10/12+00:00:00"
-          p "30 días, solo foF2" "charName=foF2" "fromDate=2026/09/05+00:00:00&toDate=2026/10/05+00:00:00"
+          sudo apt-get update -q
+          sudo apt-get install -y -q gfortran automake autoconf
+          git clone https://github.com/jawatson/voacapl.git /tmp/voacapl
+          cd /tmp/voacapl
+          git checkout c12a98b348c39f36f2659b8b3aa97b86284c8a1d
+          autoreconf -fi
+          ./configure -q
+          make
+          sudo make install
+          makeitshfbc
+          voacapl ~/itshfbc > /dev/null && echo "voacapl OK"
+      - name: Generar informe de prueba
+        run: |
+          python -m propagacion --salida /tmp/informe 2>&1 | grep -E 'WARNING|ERROR|informe'
+          echo "Secciones sin datos: $(grep -c '_Sin datos esta semana' /tmp/informe/informe.md || true)"
+          grep -n -A4 'MUF(3000) m\|Sin datos esta semana' /tmp/informe/informe.md | cut -c1-250
+          echo "### Informe de prueba" >> "$GITHUB_STEP_SUMMARY"
+          cat /tmp/informe/informe.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: informe-prueba
+          path: /tmp/informe

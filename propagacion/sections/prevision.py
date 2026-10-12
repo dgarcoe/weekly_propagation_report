@@ -168,7 +168,7 @@ def estado_regional(fof2: dict[int, float], hmf2: dict[int, float], fmin: dict[i
 
 def construir_nvis(p: Periodo, outdir: Path, iono: dict) -> dict:
     if not iono.get("ok"):
-        raise FuenteNoDisponible("sin datos de ionosondas")
+        raise FuenteNoDisponible(iono.get("motivo") or "sin datos de ionosondas")
     vigo = iono["vigo"]
     fof2, hmf2, fmin, mufd = vigo["foF2"], vigo["hmF2"], vigo["fmin"], vigo["MUF(D)"]
     if len(fof2) < 12:

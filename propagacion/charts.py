@@ -159,7 +159,8 @@ def techo_muf(bandas: list[str], frecuencias: dict[str, float], muf: dict[int, f
 
 
 def heatmap_hora_banda(matriz: np.ndarray, bandas: list[str], path: Path, titulo: str,
-                       nota: str, techo: list[tuple[int, float]] | None = None) -> Path:
+                       nota: str, techo: list[tuple[int, float]] | None = None,
+                       techo_etiqueta: str = "MUF(3000) medida") -> Path:
     """Filas = bandas (de más alta a más baja), columnas = hora UTC.
 
     ``techo``: (hora, y) de la MUF medida, dibujada como una línea escalonada.
@@ -192,7 +193,7 @@ def heatmap_hora_banda(matriz: np.ndarray, bandas: list[str], path: Path, titulo
             ys += [y, y]
         ax.plot(xs, ys, color=SERIES_2, lw=2.4, solid_joinstyle="miter", zorder=5)
         h_lab, y_lab = min(techo, key=lambda t: t[1])
-        ax.annotate("MUF(3000) medida", (h_lab, y_lab), xytext=(0, 6), textcoords="offset points",
+        ax.annotate(techo_etiqueta, (h_lab, y_lab), xytext=(0, 6), textcoords="offset points",
                     color=INK, fontsize=9, fontweight="bold", ha="center", va="bottom",
                     bbox=dict(boxstyle="round,pad=0.2", fc=SURFACE, ec=SERIES_2, lw=1), zorder=6)
         ax.set_ylim(len(bandas) - 0.5, -1.4)

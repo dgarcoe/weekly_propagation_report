@@ -81,7 +81,7 @@ jobs:
           echo "dir=$DIR" >> "$GITHUB_OUTPUT"
           echo "semana=$(basename "$DIR")" >> "$GITHUB_OUTPUT"
           echo "### Borrador generado: \`$MD\`" >> "$GITHUB_STEP_SUMMARY"
-          grep -c "_Sin datos esta semana._" "$MD" | xargs -I{} echo "Secciones sin datos: {}" >> "$GITHUB_STEP_SUMMARY"
+          grep -c "_Sin datos esta semana" "$MD" | xargs -I{} echo "Secciones sin datos: {}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Abrir PR con el borrador
         uses: peter-evans/create-pull-request@v7

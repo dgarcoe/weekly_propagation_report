@@ -116,9 +116,19 @@ Las bandas con más actividad fueron {% for b in r.bandas_top %}**{{ b.banda }}*
 ![Mapa de calor de spots por hora UTC y banda]({{ r.heatmap }})
 
 _Cómo leerlo: cada casilla es una hora UTC en una banda; cuanto más oscura, más spots. Fíjate en
-cómo las bandas altas (10–15 m) se «encienden» con el Sol y las bajas (40–80 m) de noche._{% if r.techo_muf %}
+cómo las bandas altas (10–15 m) se «encienden» con el Sol y las bajas (40–80 m) de noche._
+
+{% if r.techo_muf == "medida" %}
 _La línea naranja es la **MUF(3000)F2 medida** por las ionosondas: por debajo de ella, la teoría dice
-que la banda abre para un salto de 3 000 km. Si los spots siguen la línea, teoría y realidad coinciden._{% endif %}
+que la banda abre para un salto de 3 000 km. Si los spots siguen la línea, teoría y realidad coinciden._
+{% elif r.techo_muf == "modelada" %}
+_La línea naranja es la **MUF(3000) modelada con VOACAP** para la semana pasada (con el SFI real
+de esos días): esta semana las ionosondas no respondieron, así que es lo que dice el modelo, no una
+medida. Por debajo de ella, la teoría dice que la banda abre para un salto de 3 000 km._
+{% else %}
+_Esta semana no hay línea de MUF: ni las ionosondas ni VOACAP dieron datos._
+{% endif %}
+
 
 ### DX de la semana por banda
 
@@ -235,7 +245,7 @@ que la mediana o esporádica E.{% endif %} La línea naranja del mapa de calor m
 - **Spread-F:** {% if q.noches_spread_f %}se vio en {{ q.noches_spread_f }} noche(s) ({{ q.horas_spread_f }} h en total). Son irregularidades de la capa F que en la radio se notan como *flutter* y ecos, sobre todo en 40–80 m de madrugada.{% else %}ninguna noche con spread-F apreciable.{% endif %}
 
 {% else %}
-{{ sin_datos }}
+_Sin datos esta semana{% if io.motivo %}: {{ io.motivo }}{% endif %}._
 {% endif %}
 
 ## 3. Previsión para la semana ({{ sig_semana }})
@@ -321,7 +331,7 @@ capa F2 estuvo de mediana a {{ n.hmf2_mediana|es }} km.{% endif %}
 > margen y la LUF queda por debajo; «absorción» son las horas en que la MUF la deja pasar pero la
 > capa D la cierra.
 {% else %}
-{{ sin_datos }}
+_Sin datos esta semana{% if n.motivo %}: {{ n.motivo }}{% endif %}._
 {% endif %}
 
 ### Línea gris

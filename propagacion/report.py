@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 import re
 import traceback
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import jinja2
@@ -27,6 +27,26 @@ def _seguro(nombre: str, fn, *args, **kw) -> dict:
     except Exception as e:  # noqa: BLE001 - queremos el informe pase lo que pase
         log.error("Sección %s falló: %s\n%s", nombre, e, traceback.format_exc())
         return {"ok": False, "motivo": str(e), "fuentes": [], "avisos": []}
+
+
+def muf_de_respaldo(p: Periodo, sol: dict) -> dict[int, float] | None:
+    """MUF(3000) modelada con VOACAP para la semana analizada, si las ionosondas fallan.
+
+    Usa el SSN efectivo del SFI medio que midió NOAA esa semana; es el promedio que
+    predice el modelo, no una medida, y el informe lo dice así.
+    """
+    from . import geo, solar, voacap
+
+    sfi = (sol.get("sfi") or {}).get("media")
+    if not sfi or not voacap.disponible():
+        return None
+    lat, lon = geo.locator_to_latlon(config.STATION_LOCATOR)
+    medio = p.inicio + timedelta(days=3)
+    try:
+        return voacap.muf_modelada(lat, lon, medio.year, medio.month, solar.ssn_from_sfi(sfi))
+    except voacap.VoacapNoDisponible as e:
+        log.warning("MUF de respaldo: %s", e)
+        return None
 
 
 def _env() -> jinja2.Environment:
@@ -59,8 +79,11 @@ def generar(hoy: date, salida: Path | None = None, usar_rbn: bool = True,
 
     s1 = _seguro("sol", sol.construir, p, outdir)
     iono = _seguro("ionosondas", ionosfera.medir, p)
+    muf3000, muf_origen = (iono.get("vigo") or {}).get("MUF(D)"), "medida"
+    if not muf3000:
+        muf3000, muf_origen = muf_de_respaldo(p, s1), "modelada"
     s2 = _seguro("realidad", realidad.construir, p, outdir, usar_rbn=usar_rbn,
-                 muf3000=(iono.get("vigo") or {}).get("MUF(D)"))
+                 muf3000=muf3000, muf_origen=muf_origen)
     si = _seguro("ionosfera", ionosfera.construir, p, outdir, iono, s1, s2.get("_contactos"))
     s3 = _seguro("prevision", prevision.construir, p, outdir, s1, iono)
     s4 = _seguro("agenda", agenda.construir, p)
